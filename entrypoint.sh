@@ -1,9 +1,8 @@
 #!/bin/sh
-
 poetry run python \
     -u \
-    src/watcher/main.py \
-    --input $INPUT_SCRIPT_DIR \
+    src/postgrescodegen/main.py \
+    --input $INPUT_SCRIPTS_DIR \
     --output $OUTPUT_PACKAGE_DIR \
     --module $OUTPUT_MODULE_NAME \
     --watch $WATCH_FILES \

@@ -16,9 +16,6 @@ RUN poetry install --no-root
 COPY src ./src
 RUN poetry install
 
-RUN mkdir /run/secrets
-RUN echo "transport" > /run/secrets/db_secret
-
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 

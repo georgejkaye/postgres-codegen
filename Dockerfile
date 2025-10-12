@@ -4,7 +4,7 @@ FROM python:3.13-bookworm AS builder
 RUN apt update
 RUN apt install postgresql-client -y
 
-ARG POETRY_VERSION
+ARG POETRY_VERSION="2.1.1"
 RUN pip install poetry==${POETRY_VERSION}
 
 WORKDIR /app

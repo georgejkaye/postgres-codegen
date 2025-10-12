@@ -1,11 +1,26 @@
 from abc import abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
-from watcher.pynames import (
+from postgrescodegen.pynames import (
     get_python_name_for_postgres_function_name,
     get_python_name_for_postgres_type_name,
 )
+
+
+@dataclass
+class InputArgs:
+    user_scripts_path: Path
+    python_source_root: Path
+    output_code_module: str
+    watch_files: bool
+    roll_scripts: bool
+    db_host: str
+    db_port: int
+    db_name: Optional[str]
+    db_user: Optional[str]
+    db_password_file: Optional[Path]
 
 
 class PostgresObject:

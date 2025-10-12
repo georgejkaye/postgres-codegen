@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from watcher.classes import (
+from postgrescodegen.classes import (
     PostgresType,
     PostgresTypeField,
     PythonPostgresModule,
     PythonPostgresModuleLookup,
 )
-from watcher.generator import get_postgres_module_for_postgres_file
-from watcher.pytypes import (
+from postgrescodegen.generator import get_postgres_module_for_postgres_file
+from postgrescodegen.pytypes import (
     get_python_type_for_postgres_type,
 )
 
@@ -72,8 +72,7 @@ def get_python_code_for_postgres_types(
     postgres_types: list[PostgresType],
 ) -> str:
     python_type_codes = [
-        get_python_for_postgres_type(postgres_type)
-        for postgres_type in postgres_types
+        get_python_for_postgres_type(postgres_type) for postgres_type in postgres_types
     ]
     python_code_str = "\n\n\n".join(python_type_codes)
     python_imports = get_imports_for_python_code_str(python_code_str)

@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import Callable, Optional
 
-from watcher.classes import (
+from postgrescodegen.classes import (
     PythonablePostgresObject,
     PythonPostgresModule,
     PythonPostgresModuleLookup,
 )
-from watcher.files import (
+from postgrescodegen.files import (
     get_python_module_name_for_postgres_file,
 )
 
@@ -47,8 +47,7 @@ def get_postgres_module_for_postgres_file[T: PythonablePostgresObject](
     postgres_objects = [
         postgres_object
         for statement in postgres_statements
-        if (postgres_object := get_postgres_object_for_statement(statement))
-        is not None
+        if (postgres_object := get_postgres_object_for_statement(statement)) is not None
     ]
     python_code = get_python_code_for_postgres_objects(
         python_postgres_module_lookup, postgres_objects

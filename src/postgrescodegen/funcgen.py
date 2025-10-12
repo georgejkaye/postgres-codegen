@@ -1,17 +1,16 @@
 import re
-import sys
 from pathlib import Path
 from typing import Optional
 
-from watcher.classes import (
+from postgrescodegen.classes import (
     PostgresFunction,
     PostgresFunctionArgument,
     PythonImportDict,
     PythonPostgresModule,
     PythonPostgresModuleLookup,
 )
-from watcher.generator import get_postgres_module_for_postgres_file
-from watcher.pytypes import (
+from postgrescodegen.generator import get_postgres_module_for_postgres_file
+from postgrescodegen.pytypes import (
     get_python_type_for_base_type_of_postgres_type,
     get_python_type_for_postgres_type,
     update_python_type_import_dict,
@@ -54,9 +53,7 @@ def get_postgres_function_from_statement(
     postgres_function_args = get_postgres_function_args_from_argument_str(
         function_args_str
     )
-    return PostgresFunction(
-        function_name, function_return, postgres_function_args
-    )
+    return PostgresFunction(function_name, function_return, postgres_function_args)
 
 
 def get_python_function_argument_name_for_postgres_function_argument_name(
@@ -103,7 +100,9 @@ def get_python_function_declaration_for_postgres_function(
     else:
         return_type_string = f"Optional[{return_type_string}]"
         function_name = f"{postgres_function.function_name}_fetchone"
-    declaration = f"def {function_name}(\n{tab}{argument_string}\n) -> {return_type_string}:"
+    declaration = (
+        f"def {function_name}(\n{tab}{argument_string}\n) -> {return_type_string}:"
+    )
     return declaration
 
 
@@ -135,8 +134,10 @@ def get_python_db_inputs(
     lines: list[str] = []
     for postgres_function_arg in postgres_function_args:
         db_argument_name = postgres_function_arg.argument_name
-        python_argument_name = get_python_function_argument_name_for_postgres_function_argument_name(
-            postgres_function_arg.argument_name
+        python_argument_name = (
+            get_python_function_argument_name_for_postgres_function_argument_name(
+                postgres_function_arg.argument_name
+            )
         )
         postgres_argument_type = postgres_function_arg.argument_type
         python_base_type = get_python_type_for_base_type_of_postgres_type(
@@ -145,18 +146,12 @@ def get_python_db_inputs(
         if python_base_type is not None:
             tuple_expression = python_argument_name
         elif "[]" in postgres_function_arg.argument_type:
-            tuple_expression = (
-                get_python_list_of_tuples_for_list_of_dataclasses(
-                    postgres_function_arg
-                )
-            )
-        else:
-            tuple_expression = get_python_tuple_for_dataclass(
+            tuple_expression = get_python_list_of_tuples_for_list_of_dataclasses(
                 postgres_function_arg
             )
-        db_input_line = (
-            f"{base_indent * tab}{db_argument_name} = {tuple_expression}"
-        )
+        else:
+            tuple_expression = get_python_tuple_for_dataclass(postgres_function_arg)
+        db_input_line = f"{base_indent * tab}{db_argument_name} = {tuple_expression}"
         lines.append(db_input_line)
     return "\n".join(lines)
 
@@ -177,8 +172,7 @@ def get_python_execution_for_postgres_function(
         ["%s"] * len(postgres_function.function_args)
     )
     argument_names = [
-        function_arg.argument_name
-        for function_arg in postgres_function.function_args
+        function_arg.argument_name for function_arg in postgres_function.function_args
     ]
     variable_assignment = "rows = " if is_cursor else ""
     executing_object = "cur" if is_cursor else "conn"
@@ -219,10 +213,8 @@ def get_python_commit(base_indent: int) -> str:
 def get_python_code_for_postgres_function(
     postgres_function: PostgresFunction, fetchall: bool
 ) -> str:
-    python_function_declaration = (
-        get_python_function_declaration_for_postgres_function(
-            postgres_function, fetchall
-        )
+    python_function_declaration = get_python_function_declaration_for_postgres_function(
+        postgres_function, fetchall
     )
     python_db_inputs = get_python_db_inputs(
         postgres_function.function_args, base_indent=1
@@ -291,8 +283,7 @@ def get_import_for_postgres_type(
     if "list[" in python_type_name:
         python_type_name = python_type_name[5:-1]
     if (
-        get_python_type_for_base_type_of_postgres_type(postgres_type_name)
-        is None
+        get_python_type_for_base_type_of_postgres_type(postgres_type_name) is None
         and is_argument
     ):
         python_imports_dict = update_python_type_import_dict(
@@ -313,9 +304,7 @@ def get_import_lines_for_import_dict(import_dict: PythonImportDict) -> str:
         imported_types_alphabetised = sorted(imported_types)
         import_types_string = f"from {import_module} import (\n"
         for imported_type in imported_types_alphabetised:
-            import_types_string = (
-                f"{import_types_string}{tab}{imported_type},\n"
-            )
+            import_types_string = f"{import_types_string}{tab}{imported_type},\n"
         import_types_string = f"{import_types_string})"
         import_statements.append(import_types_string)
     return "\n".join(import_statements)
@@ -341,18 +330,14 @@ def get_imports_for_postgres_function_file(
             False,
         )
         for function_arg in postgres_function.function_args:
-            python_imports_dict, user_imports_dict = (
-                get_import_for_postgres_type(
-                    python_postgres_module_lookup,
-                    python_imports_dict,
-                    user_imports_dict,
-                    function_arg.argument_type,
-                    True,
-                )
+            python_imports_dict, user_imports_dict = get_import_for_postgres_type(
+                python_postgres_module_lookup,
+                python_imports_dict,
+                user_imports_dict,
+                function_arg.argument_type,
+                True,
             )
-    python_imports_string = get_import_lines_for_import_dict(
-        python_imports_dict
-    )
+    python_imports_string = get_import_lines_for_import_dict(python_imports_dict)
     user_imports_string = get_import_lines_for_import_dict(user_imports_dict)
     return "\n\n".join(
         [
@@ -403,13 +388,3 @@ def get_python_postgres_module_for_postgres_function_file(
         python_postgres_module_lookup,
         file_path,
     )
-
-
-if __name__ == "__main__":
-    postgres_root_path = Path(sys.argv[1])
-    python_output_module = sys.argv[2]
-    input_script_file = Path(sys.argv[3])
-    _, module = get_python_postgres_module_for_postgres_function_file(
-        postgres_root_path, python_output_module, {}, input_script_file
-    )
-    print(module.python_code)

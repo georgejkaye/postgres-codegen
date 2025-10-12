@@ -1,12 +1,15 @@
 #!/bin/sh
 
-INPUT_SCRIPT_DIR=$1
-OUTPUT_PROJECT_ROOT_DIR=$2
-OUTPUT_MODULE=$3
-
 poetry run python \
     -u \
     src/watcher/main.py \
-    $INPUT_SCRIPT_DIR \
-    $OUTPUT_PROJECT_ROOT_DIR \
-    $OUTPUT_MODULE 
+    --input $INPUT_SCRIPT_DIR \
+    --output $OUTPUT_PACKAGE_DIR \
+    --module $OUTPUT_MODULE_NAME \
+    --watch $WATCH_FILES \
+    --roll $ROLL_SCRIPTS \
+    --dbhost $DB_HOST \
+    --dbport $DB_PORT \
+    --dbuser $DB_USER \
+    --dbname $DB_NAME \
+    --dbpassword $DB_PASSWORD_FILE

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from watcher.pynames import get_python_name_for_postgres_type_name
+from postgrescodegen.pynames import get_python_name_for_postgres_type_name
 
 postgres_to_python_type_dict = {
     "VOID": "None",

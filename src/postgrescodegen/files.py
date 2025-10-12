@@ -2,7 +2,7 @@ import os
 import shutil
 from pathlib import Path
 
-from watcher.classes import PostgresFileResult
+from postgrescodegen.classes import PostgresFileResult
 
 
 def get_path_for_module(
@@ -19,9 +19,7 @@ def get_db_script_files(source_dir: Path) -> list[Path]:
         for file in files:
             file_name, extension = os.path.splitext(file)
             if extension == ".sql":
-                code_files.append(
-                    Path(os.path.join(root, f"{file_name}{extension}"))
-                )
+                code_files.append(Path(os.path.join(root, f"{file_name}{extension}")))
     return code_files
 
 
@@ -39,9 +37,7 @@ def clean_output_directory(python_project_root: Path, output_module: str):
     shutil.rmtree(dest_module_path, ignore_errors=True)
 
 
-def write_python_file(
-    output_root_path: Path, module_name: str, file_contents: str
-):
+def write_python_file(output_root_path: Path, module_name: str, file_contents: str):
     relative_module_path = Path(module_name.replace(".", "/"))
     output_path = output_root_path / f"{relative_module_path}.py"
     parent_directory = output_path.parent
@@ -56,9 +52,7 @@ def get_python_module_name_for_postgres_file(
     source_file_path: Path,
     output_root_module_name: str,
 ) -> str:
-    source_relative_path = source_file_path.relative_to(
-        postgres_scripts_root_path
-    )
+    source_relative_path = source_file_path.relative_to(postgres_scripts_root_path)
     module_name = source_relative_path.stem
     module_parent_names = list(source_relative_path.parts)[:-1]
     module_parts = [output_root_module_name]

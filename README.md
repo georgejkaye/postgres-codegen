@@ -66,7 +66,7 @@ Once you have that installed, you can generate your code
 ```sh
 poetry run python src/pythoncodegen \
     --input <scripts directory> \
-    --ouput <python project root> \
+    --output <python project root> \
     --module <name of output python module>
 ```
 
@@ -75,8 +75,8 @@ To regenerate the generated code whenever a script file is edited, use the `--wa
 ```sh
 poetry run python src/pythoncodegen \
     --input <scripts directory> \
-    --pyroot <python project root> \
-    --pymodule <name of output python module> \
+    --output <python project root> \
+    --module <name of output python module> \
     --watch
 ```
 
@@ -88,7 +88,7 @@ poetry run python src/pythoncodegen \
     --input <scripts directory> \
     --output <python project root> \
     --module <name of output python module> \
-    --runscripts
+    --roll
     --dbhost <db host, default localhost> \
     --dbport <db port, default 5432> \
     --dbuser <db user> \
@@ -113,8 +113,8 @@ docker run georgejkaye/postgres-codegen \
     -e INPUT_SCRIPTS_DIR=/home/george/scripts \
     -e OUTPUT_PACKAGE_DIR=/home/george/output \
     -e OUTPUT_MODULE_NAME=output.db \
-    -e WATCH_MODE=1 \
-    -e ROLL_MODE=1 \
+    -e WATCH_FILES=1 \
+    -e ROLL_SCRIPTS=1 \
     -e DB_HOST=georgejkaye.com \
     -e DB_PORT=5432 \
     -e DB_USER=george \

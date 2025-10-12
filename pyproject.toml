@@ -1,7 +1,7 @@
 [project]
-name = "watcher"
+name = "postgrescodegen"
 version = "0.1.0"
-description = "Watcher for updating db code"
+description = "Tool for generating code for interacting with Postgres functions"
 authors = [
     {name = "George Kaye",email = "georgejkaye@gmail.com"}
 ]

@@ -20,3 +20,9 @@ jobs:
         POETRY_VERSION=2.1.1
        push: true
        tags: georgejkaye/postgres-codegen:latest
+    - name: Update dockerhub description
+      uses: peter-evans/dockerhub-description@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        repository: georgejkaye/postgres-codegen

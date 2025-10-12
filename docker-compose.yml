@@ -1,0 +1,23 @@
+services:
+    codegen:
+      image: georgejkaye/postgres-codegen:latest
+      volumes:
+        - ${INPUT_SCRIPTS_DIR}:/app/input
+        - ${OUTPUT_PACKAGE_DIR}:/app/output
+      environment:
+          POETRY_VERSION: 2.1.1
+          INPUT_SCRIPTS_DIR: /app/input
+          OUTPUT_PACKAGE_DIR: /app/output
+          OUTPUT_MODULE_NAME: test.db
+          WATCH_FILES: ${WATCH_FILES:-0}
+          ROLL_SCRIPTS: ${ROLL_SCRIPTS:-0}
+          DB_HOST: ${DB_HOST:-localhost}
+          DB_PORT: ${DB_PORT:-5432}
+          DB_NAME: ${DB_NAME}
+          DB_USER: ${DB_USER}
+          DB_PASSWORD_FILE: /run/secrets/db_secret
+      secrets:
+        - db_secret
+secrets:
+  db_secret:
+    file: db.secret

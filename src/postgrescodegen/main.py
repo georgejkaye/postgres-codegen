@@ -2,7 +2,7 @@ import argparse
 
 from pathlib import Path
 
-from postgrescodegen.classes import InputArgs
+from postgrescodegen.classes import DbCredentials, InputArgs
 from postgrescodegen.processor import process_all_script_files
 from postgrescodegen.watcher import start_watcher
 
@@ -44,12 +44,14 @@ def parse_arguments() -> InputArgs:
     )
     parser.add_argument(
         "--dbhost",
+        nargs="?",
         type=str,
         default="localhost",
         help="Host of the db the scripts should be rolled into",
     )
     parser.add_argument(
         "--dbport",
+        nargs="?",
         type=int,
         default=5432,
         help="Port of the db the scripts should be rolled into",
@@ -73,17 +75,26 @@ def parse_arguments() -> InputArgs:
         help="Path to a file containing a password for the db the scripts should be rolled into",
     )
     args = parser.parse_args()
+    if (
+        args.roll
+        and args.dbname is not None
+        and args.dbuser is not None
+        and args.dbpassword is not None
+    ):
+        with open(args.dbpassword, "r") as f:
+            db_password = f.read().rstrip()
+        db_credentials = DbCredentials(
+            args.dbname, args.dbport, args.dbname, args.dbuser, db_password
+        )
+    else:
+        db_credentials = None
     return InputArgs(
         user_scripts_path=args.input,
         python_source_root=args.output,
         output_code_module=args.module,
         watch_files=args.watch,
         roll_scripts=args.roll,
-        db_host=args.dbhost,
-        db_port=args.dbport,
-        db_name=args.dbname,
-        db_user=args.dbuser,
-        db_password_file=args.dbpassword,
+        db_credentials=db_credentials,
     )
 
 
@@ -96,6 +107,7 @@ def main():
         args.python_source_root,
         args.output_code_module,
         args.roll_scripts,
+        args.db_credentials,
     )
     if args.watch_files:
         start_watcher(
@@ -104,6 +116,7 @@ def main():
             args.python_source_root,
             args.output_code_module,
             args.roll_scripts,
+            args.db_credentials,
         )
 
 

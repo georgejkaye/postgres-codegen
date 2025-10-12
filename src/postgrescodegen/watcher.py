@@ -2,10 +2,12 @@ import time
 
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
+from postgrescodegen.classes import DbCredentials
 from postgrescodegen.processor import process_all_script_files
 
 
@@ -17,6 +19,7 @@ class WatcherHandler(FileSystemEventHandler):
         output_package_dir: Path,
         output_module_name: str,
         roll_scripts: bool,
+        db_credentials: Optional[DbCredentials],
     ):
         self.last_trigger_time = datetime.now()
         self.internal_scripts_path = internal_scripts_path
@@ -24,6 +27,7 @@ class WatcherHandler(FileSystemEventHandler):
         self.output_package_dir = output_package_dir
         self.output_module_name = output_module_name
         self.roll_scripts = roll_scripts
+        self.db_credentials = db_credentials
 
     def process_script_files_if_appropriate(self):
         current_time = datetime.now()
@@ -34,6 +38,7 @@ class WatcherHandler(FileSystemEventHandler):
                 self.output_package_dir,
                 self.output_module_name,
                 self.roll_scripts,
+                self.db_credentials,
             )
 
     def on_created(self, event: FileSystemEvent):
@@ -52,6 +57,7 @@ def start_watcher(
     output_package_dir: Path,
     output_module_name: str,
     roll_scripts: bool,
+    db_credentials: Optional[DbCredentials],
 ):
     event_handler = WatcherHandler(
         internal_scripts_path,
@@ -59,6 +65,7 @@ def start_watcher(
         output_package_dir,
         output_module_name,
         roll_scripts,
+        db_credentials,
     )
     observer = Observer()
     observer.schedule(event_handler, str(user_scripts_path), recursive=True)

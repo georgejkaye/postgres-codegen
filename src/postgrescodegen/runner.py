@@ -3,28 +3,25 @@ import subprocess
 from pathlib import Path
 from typing import Mapping
 
-db_host = os.environ["DB_HOST"]
-db_name = os.environ["DB_NAME"]
-db_user = os.environ["DB_USER"]
-
-with open(os.environ["DB_PASSWORD"]) as f:
-    db_password = f.read().rstrip()
+from postgrescodegen.classes import DbCredentials
 
 
-def run_in_script_file(script_file: Path):
+def run_in_script_file(db_credentials: DbCredentials, script_file: Path):
     print(f"Running in {script_file}")
     env: Mapping[str, str] = dict(os.environ)
-    env["PGPASSWORD"] = db_password
+    env["PGPASSWORD"] = db_credentials.password
     try:
         subprocess.check_output(
             [
                 "psql",
                 "-h",
-                db_host,
+                db_credentials.host,
+                "-p",
+                str(db_credentials.port),
                 "-d",
-                db_name,
+                db_credentials.name,
                 "-U",
-                db_user,
+                db_credentials.user,
                 "-f",
                 str(script_file),
                 "-q",

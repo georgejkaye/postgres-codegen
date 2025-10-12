@@ -10,17 +10,22 @@ from postgrescodegen.pynames import (
 
 
 @dataclass
+class DbCredentials:
+    host: str
+    port: int
+    name: str
+    user: str
+    password: str
+
+
+@dataclass
 class InputArgs:
     user_scripts_path: Path
     python_source_root: Path
     output_code_module: str
     watch_files: bool
     roll_scripts: bool
-    db_host: str
-    db_port: int
-    db_name: Optional[str]
-    db_user: Optional[str]
-    db_password_file: Optional[Path]
+    db_credentials: Optional[DbCredentials]
 
 
 class PostgresObject:

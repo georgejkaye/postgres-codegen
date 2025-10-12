@@ -109,7 +109,7 @@ You can then run the image using `docker run`:
 
 ```sh
 # Specify variables explicitly
-docker run georgejkaye/postgres-codegen \
+docker run \
     -e INPUT_SCRIPTS_DIR=/home/george/scripts \
     -e OUTPUT_PACKAGE_DIR=/home/george/output \
     -e OUTPUT_MODULE_NAME=output.db \
@@ -119,10 +119,11 @@ docker run georgejkaye/postgres-codegen \
     -e DB_PORT=5432 \
     -e DB_USER=george \
     -e DB_NAME=db \
-    -e DB_PASSWORD_FILE=db.secret
+    -e DB_PASSWORD_FILE=db.secret \
+    georgejkaye/postgres-codegen
 
 # Use .env file
-docker run georgejkaye/postgres-codegen --env-file .env
+docker run --env-file .env georgejkaye/postgres-codegen
 ```
 
 Alternatively you can build the image yourself locally.

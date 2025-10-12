@@ -95,56 +95,18 @@ poetry run python src/pythoncodegen \
     --dbpassword <path to a file containing the db password>
 ```
 
-### As a Docker image
-
-Rather than having to faff with dependencies you can run the tool using [Docker](https://www.docker.com/).
-You can retrieve the latest prebuilt image by pulling it from Docker Hub:
-
-```sh
-# To get latest main version
-docker pull georgejkaye/postgres-codegen:latest
-```
-
-You can then run the image using `docker run`:
-
-```sh
-# Specify variables explicitly
-docker run \
-    -e INPUT_SCRIPTS_DIR=/home/george/scripts \
-    -e OUTPUT_PACKAGE_DIR=/home/george/output \
-    -e OUTPUT_MODULE_NAME=output.db \
-    -e WATCH_FILES=1 \
-    -e ROLL_SCRIPTS=1 \
-    -e DB_HOST=georgejkaye.com \
-    -e DB_PORT=5432 \
-    -e DB_USER=george \
-    -e DB_NAME=db \
-    -e DB_PASSWORD_FILE=db.secret \
-    georgejkaye/postgres-codegen
-
-# Use .env file
-docker run --env-file .env georgejkaye/postgres-codegen
-```
-
-Alternatively you can build the image yourself locally.
-
-```sh
-docker build . -t postgres-codegen
-docker run postgres-codegen ...
-```
-
 ### Docker Compose
 
-In a large project you may be using [Docker Compose](https://docs.docker.com/compose/) to orchestrate your containers.
-In this case you can just include the image in your `docker-compose.yml` file.
+To avoid faffing around with dependencies you can run the tool in a [Docker](https://www.docker.com/) container.
+The easiest way to do this is by using [Docker Compose](https://docs.docker.com/compose/) and including the following in your `docker-compose.yml` file.
 
 ```yml
 services:
     codegen:
-        image: georgejkaye/docker-codegen
+        image: georgejkaye/postgres-codegen:latest
         environment:
-            INPUT_SCRIPTS_DIR: /home/george/scripts
-            OUTPUT_PACKAGE_DIR: /home/george/output
+            INPUT_SCRIPTS_DIR: /app/input
+            OUTPUT_PACKAGE_DIR: /app/output
             OUTPUT_MODULE_NAME: output.db
             WATCH_MODE: 1
             ROLL_MODE: 1
@@ -157,6 +119,28 @@ services:
             - db_secret
 
 secrets:
-    db_secret: db.secret
+    db_secret:
+        file: db.secret
 ```
 
+Running the tool is then as simple as:
+
+```sh
+docker compose up --build
+```
+
+An example `docker-compose.yml` file is provided in this repo, set up to receive environment variables from a `.env` file.
+
+### Raw docker image
+
+If you prefer, you can use the raw docker image and run it yourself.
+
+```sh
+# pull from docker hub
+docker pull georgejkaye/docker-codegen:latest
+
+# build locally
+docker build -t docker-codegen .
+```
+
+Unfortunately secrets are a little more complicated in this scenario, so you may have to set up a [Docker Swarm](https://docs.docker.com/engine/swarm/) to set up your [secrets](https://docs.docker.com/engine/swarm/secrets/).

@@ -1,5 +1,4 @@
 import argparse
-
 from pathlib import Path
 
 from postgrescodegen.classes import DbCredentials, InputArgs
@@ -12,21 +11,22 @@ def parse_arguments() -> InputArgs:
         description="Generate Python code from PostgreSQL scripts"
     )
     parser.add_argument(
-        "--input",
+        "input",
         type=Path,
         help="Path to the directory containing user Postgres scripts",
     )
     parser.add_argument(
-        "--output",
+        "output",
         type=Path,
         help="Path to the root directory of the Python package that will contain the generated code",
     )
     parser.add_argument(
-        "--module",
+        "module",
         type=str,
         help="Name of the output Python module (e.g. 'api.db').",
     )
     parser.add_argument(
+        "-w",
         "--watch",
         nargs="?",
         type=parse_bool_string,
@@ -35,6 +35,7 @@ def parse_arguments() -> InputArgs:
         help="Watch for changes in the user scripts directory and regenerate code automatically.",
     )
     parser.add_argument(
+        "-r",
         "--roll",
         nargs="?",
         type=parse_bool_string,

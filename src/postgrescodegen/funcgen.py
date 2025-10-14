@@ -376,7 +376,8 @@ def get_python_code_for_postgres_functions(
 
 def get_python_postgres_module_for_postgres_function_file(
     postgres_input_root_path: Path,
-    python_output_root_module: str,
+    python_package_name: str,
+    python_output_module: str,
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     file_path: Path,
 ) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[PostgresFunction]]:
@@ -384,7 +385,8 @@ def get_python_postgres_module_for_postgres_function_file(
         get_postgres_function_from_statement,
         get_python_code_for_postgres_functions,
         postgres_input_root_path,
-        python_output_root_module,
+        python_package_name,
+        python_output_module,
         python_postgres_module_lookup,
         file_path,
     )

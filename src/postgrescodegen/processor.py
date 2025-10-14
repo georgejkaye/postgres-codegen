@@ -20,32 +20,36 @@ from postgrescodegen.funcgen import (
     get_python_postgres_module_for_postgres_function_file,
 )
 from postgrescodegen.runner import run_in_script_file
-from postgrescodegen.typegen import get_python_postgres_module_for_postgres_type_file
+from postgrescodegen.typegen import (
+    get_python_postgres_module_for_postgres_type_file,
+)
 
 
 def process_script_file[T: PostgresObject](
-    postgres_input_root_path: Path,
-    python_output_root_module: str,
-    python_output_root_path: Path,
+    postgres_scripts_path: Path,
+    python_output_module: str,
+    python_package_path: Path,
     roll_scripts: bool,
     db_credentials: Optional[DbCredentials],
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     get_script_file_module: Callable[
-        [Path, str, PythonPostgresModuleLookup, Path],
+        [Path, str, str, PythonPostgresModuleLookup, Path],
         tuple[PythonPostgresModuleLookup, PythonPostgresModule[T]],
     ],
     script_file: Path,
 ) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[T]]:
     if roll_scripts and db_credentials is not None:
         run_in_script_file(db_credentials, script_file)
+    python_package_name = python_package_path.name
     python_postgres_module_lookup, script_file_module = get_script_file_module(
-        postgres_input_root_path,
-        python_output_root_module,
+        postgres_scripts_path,
+        python_package_name,
+        python_output_module,
         python_postgres_module_lookup,
         script_file,
     )
     write_python_file(
-        python_output_root_path,
+        python_package_path,
         script_file_module.module_name,
         script_file_module.python_code,
     )
@@ -74,7 +78,9 @@ def process_type_script_file(
 
 
 def process_view_script_file(
-    roll_scripts: bool, db_credentials: Optional[DbCredentials], script_file: Path
+    roll_scripts: bool,
+    db_credentials: Optional[DbCredentials],
+    script_file: Path,
 ):
     if roll_scripts and db_credentials is not None:
         run_in_script_file(db_credentials, script_file)
@@ -154,7 +160,9 @@ def process_all_script_files(
     db_credentials: Optional[DbCredentials],
 ):
     clean_output_directory(python_source_root, output_code_module)
-    process_internal_script_files(internal_scripts_path, roll_scripts, db_credentials)
+    process_internal_script_files(
+        internal_scripts_path, roll_scripts, db_credentials
+    )
     process_user_script_files(
         python_source_root,
         output_code_module,

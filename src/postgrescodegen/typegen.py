@@ -72,7 +72,8 @@ def get_python_code_for_postgres_types(
     postgres_types: list[PostgresType],
 ) -> str:
     python_type_codes = [
-        get_python_for_postgres_type(postgres_type) for postgres_type in postgres_types
+        get_python_for_postgres_type(postgres_type)
+        for postgres_type in postgres_types
     ]
     python_code_str = "\n\n\n".join(python_type_codes)
     python_imports = get_imports_for_python_code_str(python_code_str)
@@ -90,16 +91,18 @@ def get_postgres_types_for_postgres_statements(
 
 
 def get_python_postgres_module_for_postgres_type_file(
-    postgres_input_root_path: Path,
-    python_output_root_module: str,
+    postgres_scripts_path: Path,
+    python_package_name: str,
+    python_output_module: str,
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     file_path: Path,
 ) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[PostgresType]]:
     return get_postgres_module_for_postgres_file(
         get_postgres_type_for_statement,
         get_python_code_for_postgres_types,
-        postgres_input_root_path,
-        python_output_root_module,
+        postgres_scripts_path,
+        python_package_name,
+        python_output_module,
         python_postgres_module_lookup,
         file_path,
     )

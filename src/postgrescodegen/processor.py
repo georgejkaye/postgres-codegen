@@ -22,6 +22,7 @@ from postgrescodegen.files import (
 from postgrescodegen.funcgen import (
     get_python_postgres_module_for_postgres_function_file,
 )
+from postgrescodegen.register import get_register_module_code
 from postgrescodegen.runner import run_in_script_file
 from postgrescodegen.typegen import (
     get_python_postgres_module_for_postgres_type_file,
@@ -138,6 +139,21 @@ def copy_python_resources(
             shutil.copyfile(full_path, dest_path)
 
 
+def process_register_types_file(
+    output_root_path: Path,
+    output_module_name: str,
+    python_postgres_module_lookup: PythonPostgresModuleLookup,
+    postgres_types: list[PostgresType],
+):
+    register_type_module = get_register_module_code(
+        python_postgres_module_lookup,
+        postgres_types,
+    )
+    write_python_file(
+        output_root_path, f"{output_module_name}.types.register", register_type_module
+    )
+
+
 def process_user_script_files(
     python_source_root: Path,
     output_code_module: str,
@@ -147,8 +163,9 @@ def process_user_script_files(
 ):
     user_files = get_postgres_files_in_directory(user_scripts_path)
     python_postgres_module_lookup: PythonPostgresModuleLookup = {}
+    postgres_types: list[PostgresType] = []
     for file in user_files.type_files:
-        python_postgres_module_lookup, _ = process_type_script_file(
+        python_postgres_module_lookup, module = process_type_script_file(
             user_scripts_path,
             output_code_module,
             python_source_root,
@@ -157,6 +174,13 @@ def process_user_script_files(
             python_postgres_module_lookup,
             file,
         )
+        postgres_types.extend(module.module_objects)
+    process_register_types_file(
+        python_source_root,
+        output_code_module,
+        python_postgres_module_lookup,
+        postgres_types,
+    )
     for file in user_files.view_files:
         process_view_script_file(roll_scripts, db_credentials, file)
     for file in user_files.function_files:

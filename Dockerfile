@@ -10,7 +10,8 @@ RUN pip install poetry==${POETRY_VERSION}
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
-COPY utils/ utils
+
+COPY resources/ ./resources
 
 # Poetry complains without a readme
 RUN touch README.md

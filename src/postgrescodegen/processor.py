@@ -152,7 +152,7 @@ def process_user_script_files(
 
 
 def process_all_script_files(
-    internal_scripts_path: Path,
+    resources_path: Path,
     user_scripts_path: Path,
     python_source_root: Path,
     output_code_module: str,

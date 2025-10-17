@@ -26,11 +26,10 @@ def parse_arguments() -> InputArgs:
         help="Name of the output Python module (e.g. 'api.db').",
     )
     parser.add_argument(
-        "-u",
-        "--utils",
+        "--resources",
         type=Path,
-        default=Path(__file__) / ".." / ".." / "utils",
-        help="Path to the directory containing provided util scripts",
+        default=Path(__file__).parent / ".." / ".." / "resources",
+        help="Path to the directory containing provided resources",
     )
     parser.add_argument(
         "-w",
@@ -100,7 +99,7 @@ def parse_arguments() -> InputArgs:
         user_scripts_path=args.input,
         python_source_root=args.output,
         output_code_module=args.module,
-        util_scripts_path=args.utils,
+        resources_path=args.resources,
         watch_files=args.watch,
         roll_scripts=args.roll,
         db_credentials=db_credentials,
@@ -110,7 +109,7 @@ def parse_arguments() -> InputArgs:
 def main():
     args = parse_arguments()
     process_all_script_files(
-        args.util_scripts_path,
+        args.resources_path,
         args.user_scripts_path,
         args.python_source_root,
         args.output_code_module,
@@ -119,7 +118,7 @@ def main():
     )
     if args.watch_files:
         start_watcher(
-            args.util_scripts_path,
+            args.resources_path,
             args.user_scripts_path,
             args.python_source_root,
             args.output_code_module,

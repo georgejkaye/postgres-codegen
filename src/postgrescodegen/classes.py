@@ -23,6 +23,7 @@ class InputArgs:
     user_scripts_path: Path
     python_source_root: Path
     output_code_module: str
+    util_scripts_path: Path
     watch_files: bool
     roll_scripts: bool
     db_credentials: Optional[DbCredentials]

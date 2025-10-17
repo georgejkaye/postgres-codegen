@@ -1,3 +1,6 @@
+import os
+import shutil
+
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -108,14 +111,31 @@ def process_function_script_file(
 
 
 def process_internal_script_files(
-    internal_scripts_path: Path,
+    resources_path: Path,
     roll_scripts: bool,
     db_credentials: Optional[DbCredentials],
 ):
-    internal_files = get_db_script_files(internal_scripts_path)
+    internal_files = get_db_script_files(resources_path / "sql")
     for file in internal_files:
         if roll_scripts and db_credentials is not None:
             run_in_script_file(db_credentials, file)
+
+
+def copy_python_resources(
+    resources_path: Path, python_source_root: Path, output_code_module: str
+):
+    python_resources_path = resources_path / "python"
+    for root, _, files in os.walk(python_resources_path):
+        for file in files:
+            full_path = Path(root) / file
+            relative_path = full_path.relative_to(python_resources_path)
+            dest_path = (
+                python_source_root
+                / output_code_module.replace(".", "/")
+                / relative_path
+            )
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(full_path, dest_path)
 
 
 def process_user_script_files(
@@ -160,9 +180,8 @@ def process_all_script_files(
     db_credentials: Optional[DbCredentials],
 ):
     clean_output_directory(python_source_root, output_code_module)
-    process_internal_script_files(
-        internal_scripts_path, roll_scripts, db_credentials
-    )
+    process_internal_script_files(resources_path, roll_scripts, db_credentials)
+    copy_python_resources(resources_path, python_source_root, output_code_module)
     process_user_script_files(
         python_source_root,
         output_code_module,

@@ -48,8 +48,7 @@ def get_postgres_module_for_postgres_file[T: PythonablePostgresObject](
     postgres_objects = [
         postgres_object
         for statement in postgres_statements
-        if (postgres_object := get_postgres_object_for_statement(statement))
-        is not None
+        if (postgres_object := get_postgres_object_for_statement(statement)) is not None
     ]
     python_code = get_python_code_for_postgres_objects(
         python_postgres_module_lookup, postgres_objects
@@ -62,7 +61,7 @@ def get_postgres_module_for_postgres_file[T: PythonablePostgresObject](
     for postgres_object in postgres_objects:
         python_name = postgres_object.get_python_name()
         python_postgres_module_lookup[python_name] = (
-            f"{python_package_name}.python_module_name"
+            f"{python_package_name}.{python_module_name}"
         )
     python_postgres_module = PythonPostgresModule(
         python_module_name, postgres_objects, python_code

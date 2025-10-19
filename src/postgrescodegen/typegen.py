@@ -1,4 +1,6 @@
 from pathlib import Path
+import re
+from typing import Optional
 
 from postgrescodegen.classes import (
     PostgresType,
@@ -13,17 +15,19 @@ from postgrescodegen.pytypes import (
 
 tab = "    "
 
+type_regex = r"CREATE TYPE (.*) AS \((.*)\)"
+
 
 def get_postgres_type_for_statement(
     statement: str,
-) -> PostgresType:
-    bracket_removed = statement.replace(")", "")
-    string_split_at_bracket = bracket_removed.split("(", 1)
-    postgres_create_type_clause = string_split_at_bracket[0]
-    postgres_type_name = postgres_create_type_clause.split(" ")[2]
-    postgres_type_field_clause = string_split_at_bracket[1]
+) -> Optional[PostgresType]:
+    type_matches = re.match(type_regex, statement)
+    if type_matches is None:
+        return None
+    postgres_type_name = type_matches.group(1)
+    type_fields_string = type_matches.group(2)
     postgres_type_fields: list[PostgresTypeField] = []
-    for type_clause in postgres_type_field_clause.split(","):
+    for type_clause in type_fields_string.split(","):
         type_clause_clauses = type_clause.strip().split(" ", 1)
         postgres_type_field_name = type_clause_clauses[0]
         postgres_type_field_type = type_clause_clauses[1]
@@ -49,19 +53,20 @@ def check_if_type_in_code(python_code_str: str, type_to_check: str) -> bool:
     return (
         f": {type_to_check}" in python_code_str
         or f"[{type_to_check}]" in python_code_str
+        or f"[{type_to_check}[" in python_code_str
     )
 
 
 def get_imports_for_python_code_str(python_code_str: str) -> list[str]:
     python_imports: list[str] = ["from dataclasses import dataclass"]
-    if "Optional[" in python_code_str:
-        python_imports.append("from typing import Optional")
     if check_if_type_in_code(python_code_str, "datetime"):
         python_imports.append("from datetime import datetime")
     if check_if_type_in_code(python_code_str, "timedelta"):
         python_imports.append("from datetime import timedelta")
     if check_if_type_in_code(python_code_str, "Decimal"):
         python_imports.append("from decimal import Decimal")
+    if "Optional[" in python_code_str:
+        python_imports.append("from typing import Optional")
     if check_if_type_in_code(python_code_str, "Range"):
         python_imports.append("from psycopg.types.range import Range")
     return python_imports
@@ -72,8 +77,7 @@ def get_python_code_for_postgres_types(
     postgres_types: list[PostgresType],
 ) -> str:
     python_type_codes = [
-        get_python_for_postgres_type(postgres_type)
-        for postgres_type in postgres_types
+        get_python_for_postgres_type(postgres_type) for postgres_type in postgres_types
     ]
     python_code_str = "\n\n\n".join(python_type_codes)
     python_imports = get_imports_for_python_code_str(python_code_str)
@@ -85,7 +89,9 @@ def get_postgres_types_for_postgres_statements(
     statements: list[str],
 ) -> list[PostgresType]:
     postgres_types = [
-        get_postgres_type_for_statement(statement) for statement in statements
+        postgres_type
+        for statement in statements
+        if (postgres_type := get_postgres_type_for_statement(statement)) is not None
     ]
     return postgres_types
 

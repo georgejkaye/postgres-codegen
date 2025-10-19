@@ -13,7 +13,7 @@ tab = "    "
 
 def get_register_type_function() -> str:
     lines = [
-        "def register_type(conn: Connection, name: str, factory: type)",
+        "def register_type(conn: Connection, name: str, factory: type):",
         f"{tab}info = CompositeInfo.fetch(conn, name)",
         f"{tab}if info is not None:",
         f"{tab * 2}register_composite(info, conn, factory)",

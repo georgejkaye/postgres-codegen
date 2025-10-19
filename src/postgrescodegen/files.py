@@ -36,12 +36,12 @@ def clean_output_directory(python_package_path: Path, output_module: str):
     dest_module_path = get_path_for_module(
         python_package_path, output_module, is_leaf=False
     )
-    shutil.rmtree(dest_module_path, ignore_errors=True)
+    if os.path.exists(dest_module_path):
+        print(f"Cleaning {dest_module_path}")
+        shutil.rmtree(dest_module_path)
 
 
-def write_python_file(
-    output_root_path: Path, module_name: str, file_contents: str
-):
+def write_python_file(output_root_path: Path, module_name: str, file_contents: str):
     relative_module_path = Path(module_name.replace(".", "/"))
     output_path = output_root_path / f"{relative_module_path}.py"
     parent_directory = output_path.parent

@@ -98,4 +98,10 @@ class PostgresFileResult:
 
 type PythonPostgresModuleLookup = dict[str, str]
 
-type PythonImportDict = dict[str, list[str]]
+type PythonImportDict = dict[str, set[str]]
+
+
+@dataclass
+class PythonImport:
+    module: str
+    token: str

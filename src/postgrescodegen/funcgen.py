@@ -356,6 +356,7 @@ def get_imports_for_postgres_function_file(
 
 def get_python_code_for_postgres_functions(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
+    module_name: str,
     postgres_functions: list[PostgresFunction],
 ) -> str:
     python_sections = [

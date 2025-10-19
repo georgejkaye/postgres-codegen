@@ -5,10 +5,15 @@ from typing import Optional
 from postgrescodegen.classes import (
     PostgresType,
     PostgresTypeField,
+    PythonImportDict,
     PythonPostgresModule,
     PythonPostgresModuleLookup,
 )
-from postgrescodegen.generator import get_postgres_module_for_postgres_file
+from postgrescodegen.generator import (
+    get_import_statements_for_python_import_dict,
+    get_postgres_module_for_postgres_file,
+    update_python_type_import_dict,
+)
 from postgrescodegen.pytypes import (
     get_python_type_for_postgres_type,
 )
@@ -57,7 +62,9 @@ def check_if_type_in_code(python_code_str: str, type_to_check: str) -> bool:
     )
 
 
-def get_imports_for_python_code_str(python_code_str: str) -> list[str]:
+def get_stdlib_imports_for_python_code_str(
+    python_code_str: str,
+) -> str:
     python_imports: list[str] = ["from dataclasses import dataclass"]
     if check_if_type_in_code(python_code_str, "datetime"):
         python_imports.append("from datetime import datetime")
@@ -69,20 +76,45 @@ def get_imports_for_python_code_str(python_code_str: str) -> list[str]:
         python_imports.append("from typing import Optional")
     if check_if_type_in_code(python_code_str, "Range"):
         python_imports.append("from psycopg.types.range import Range")
-    return python_imports
+    return "\n".join(python_imports)
+
+
+def get_user_imports_for_postgres_types(
+    python_postgres_module_lookup: PythonPostgresModuleLookup,
+    module_name: str,
+    postgres_types: list[PostgresType],
+) -> str:
+    import_dict: PythonImportDict = {}
+    for postgres_type in postgres_types:
+        for postgres_type_field in postgres_type.type_fields:
+            postgres_type_field_type = postgres_type_field.field_type
+            postgres_type_field_module = python_postgres_module_lookup.get(
+                postgres_type_field_type
+            )
+            if (
+                postgres_type_field_module is not None
+                and postgres_type_field_module != module_name
+            ):
+                import_dict = update_python_type_import_dict(
+                    import_dict, postgres_type_field_module, postgres_type_field_type
+                )
+    return get_import_statements_for_python_import_dict(import_dict)
 
 
 def get_python_code_for_postgres_types(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
+    module_name: str,
     postgres_types: list[PostgresType],
 ) -> str:
     python_type_codes = [
         get_python_for_postgres_type(postgres_type) for postgres_type in postgres_types
     ]
     python_code_str = "\n\n\n".join(python_type_codes)
-    python_imports = get_imports_for_python_code_str(python_code_str)
-    python_import_str = "\n".join(python_imports)
-    return f"{python_import_str}\n\n{python_code_str}"
+    stdlib_python_imports = get_stdlib_imports_for_python_code_str(python_code_str)
+    user_python_imports = get_user_imports_for_postgres_types(
+        python_postgres_module_lookup, module_name, postgres_types
+    )
+    return f"{stdlib_python_imports}\n\n{user_python_imports}\n\n{python_code_str}"
 
 
 def get_postgres_types_for_postgres_statements(

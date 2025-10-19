@@ -80,7 +80,7 @@ def get_statements_from_postgres_file(
 def get_postgres_module_for_postgres_file[T: PythonablePostgresObject](
     get_postgres_object_for_statement: Callable[[str], Optional[T]],
     get_python_code_for_postgres_objects: Callable[
-        [PythonPostgresModuleLookup, list[T]], str
+        [PythonPostgresModuleLookup, str, list[T]], str
     ],
     postgres_scripts_path: Path,
     python_package_name: str,
@@ -94,13 +94,13 @@ def get_postgres_module_for_postgres_file[T: PythonablePostgresObject](
         for statement in postgres_statements
         if (postgres_object := get_postgres_object_for_statement(statement)) is not None
     ]
-    python_code = get_python_code_for_postgres_objects(
-        python_postgres_module_lookup, postgres_objects
-    )
     python_module_name = get_python_module_name_for_postgres_file(
         postgres_scripts_path,
         file_path,
         python_output_module,
+    )
+    python_code = get_python_code_for_postgres_objects(
+        python_postgres_module_lookup, python_module_name, postgres_objects
     )
     for postgres_object in postgres_objects:
         python_name = postgres_object.get_python_name()

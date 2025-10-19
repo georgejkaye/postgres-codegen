@@ -9,11 +9,14 @@ from postgrescodegen.classes import (
     PythonPostgresModule,
     PythonPostgresModuleLookup,
 )
-from postgrescodegen.generator import get_postgres_module_for_postgres_file
+from postgrescodegen.generator import (
+    get_import_statements_for_python_import_dict,
+    get_postgres_module_for_postgres_file,
+    update_python_type_import_dict,
+)
 from postgrescodegen.pytypes import (
     get_python_type_for_base_type_of_postgres_type,
     get_python_type_for_postgres_type,
-    update_python_type_import_dict,
 )
 
 tab = "    "
@@ -266,8 +269,8 @@ def get_python_code_for_postgres_function(
 
 def get_import_for_postgres_type(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
-    python_imports_dict: dict[str, list[str]],
-    user_imports_dict: dict[str, list[str]],
+    python_imports_dict: dict[str, set[str]],
+    user_imports_dict: dict[str, set[str]],
     postgres_type_name: str,
     is_argument: bool,
 ) -> tuple[PythonImportDict, PythonImportDict]:
@@ -279,6 +282,10 @@ def get_import_for_postgres_type(
     if "datetime" in python_type_name:
         python_imports_dict = update_python_type_import_dict(
             python_imports_dict, "datetime", "datetime"
+        )
+    if "Decimal" in python_type_name:
+        python_imports_dict = update_python_type_import_dict(
+            python_imports_dict, "decimal", "Decimal"
         )
     if "list[" in python_type_name:
         python_type_name = python_type_name[5:-1]
@@ -297,30 +304,13 @@ def get_import_for_postgres_type(
     return python_imports_dict, user_imports_dict
 
 
-def get_import_lines_for_import_dict(import_dict: PythonImportDict) -> str:
-    import_statements: list[str] = []
-    for import_module in import_dict.keys():
-        imported_types = import_dict[import_module]
-        imported_types_alphabetised = sorted(imported_types)
-        import_types_string = f"from {import_module} import (\n"
-        for imported_type in imported_types_alphabetised:
-            import_types_string = f"{import_types_string}{tab}{imported_type},\n"
-        import_types_string = f"{import_types_string})"
-        import_statements.append(import_types_string)
-    return "\n".join(import_statements)
-
-
 def get_imports_for_postgres_function_file(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     postgres_functions: list[PostgresFunction],
 ) -> str:
-    psycopg_imports = [
-        "from psycopg import Connection",
-        "from psycopg.rows import class_row",
-    ]
-    psycopg_imports_string = "\n".join(psycopg_imports)
-    python_imports_dict: dict[str, list[str]] = {}
-    user_imports_dict: dict[str, list[str]] = {}
+    class_row_required = False
+    python_imports_dict: dict[str, set[str]] = {}
+    user_imports_dict: dict[str, set[str]] = {}
     for postgres_function in postgres_functions:
         python_imports_dict, user_imports_dict = get_import_for_postgres_type(
             python_postgres_module_lookup,
@@ -329,6 +319,8 @@ def get_imports_for_postgres_function_file(
             postgres_function.function_return,
             False,
         )
+        if postgres_function.function_return != "VOID":
+            class_row_required = True
         for function_arg in postgres_function.function_args:
             python_imports_dict, user_imports_dict = get_import_for_postgres_type(
                 python_postgres_module_lookup,
@@ -337,8 +329,18 @@ def get_imports_for_postgres_function_file(
                 function_arg.argument_type,
                 True,
             )
-    python_imports_string = get_import_lines_for_import_dict(python_imports_dict)
-    user_imports_string = get_import_lines_for_import_dict(user_imports_dict)
+    psycopg_imports = [
+        "from psycopg import Connection",
+    ]
+    if class_row_required:
+        psycopg_imports.append("from psycopg.rows import class_row")
+    psycopg_imports_string = "\n".join(psycopg_imports)
+    python_imports_string = get_import_statements_for_python_import_dict(
+        python_imports_dict
+    )
+    user_imports_string = get_import_statements_for_python_import_dict(
+        user_imports_dict
+    )
     return "\n\n".join(
         [
             import_string

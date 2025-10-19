@@ -56,6 +56,8 @@ def get_python_module_name_for_postgres_file(
 ) -> str:
     source_relative_path = source_file_path.relative_to(postgres_scripts_path)
     module_name = source_relative_path.stem
+    if module_name[0].isdigit():
+        module_name = module_name.split("_", maxsplit=1)[1]
     module_parent_names = list(source_relative_path.parts)[:-1]
     module_parts = [output_module_name]
     module_parts.extend(module_parent_names)

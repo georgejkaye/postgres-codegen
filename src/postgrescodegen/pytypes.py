@@ -1,5 +1,9 @@
 from typing import Optional
 
+from postgrescodegen.pgtypes import (
+    get_base_postgres_type_for_postgres_type,
+    is_postgres_array_type,
+)
 from postgrescodegen.pynames import get_python_name_for_postgres_type_name
 
 postgres_to_python_type_dict = {
@@ -34,6 +38,10 @@ def get_python_type_for_base_type_of_postgres_type(
     return postgres_to_python_type_dict.get(postgres_type_name)
 
 
+def is_user_defined_type(postgres_type_name: str) -> bool:
+    return get_python_type_for_base_type_of_postgres_type(postgres_type_name) is None
+
+
 def get_python_type_for_postgres_base_type(base_type_string: str) -> str:
     if (
         base_python_type := postgres_to_python_type_dict.get(base_type_string)
@@ -43,12 +51,8 @@ def get_python_type_for_postgres_base_type(base_type_string: str) -> str:
 
 
 def get_python_type_for_postgres_type(type_string: str) -> str:
-    is_array_type = type_string[-2:] == "[]"
-    if is_array_type:
-        base_type_string = type_string[:-2]
-    else:
-        base_type_string = type_string
+    base_type_string = get_base_postgres_type_for_postgres_type(type_string)
     base_python_type = get_python_type_for_postgres_base_type(base_type_string)
-    if is_array_type:
+    if is_postgres_array_type(type_string):
         return f"list[{base_python_type}]"
     return base_python_type

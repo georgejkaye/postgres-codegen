@@ -14,8 +14,10 @@ from postgrescodegen.generator import (
     get_postgres_module_for_postgres_file,
     update_python_type_import_dict,
 )
+from postgrescodegen.pgtypes import get_base_postgres_type_for_postgres_type
 from postgrescodegen.pytypes import (
     get_python_type_for_postgres_type,
+    is_user_defined_type,
 )
 
 tab = "    "
@@ -81,29 +83,41 @@ def get_stdlib_imports_for_python_code_str(
 
 def get_user_imports_for_postgres_types(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
-    module_name: str,
     postgres_types: list[PostgresType],
 ) -> str:
     import_dict: PythonImportDict = {}
+    postgres_type_names = [postgres_type.get_name() for postgres_type in postgres_types]
     for postgres_type in postgres_types:
         for postgres_type_field in postgres_type.type_fields:
             postgres_type_field_type = postgres_type_field.field_type
-            postgres_type_field_module = python_postgres_module_lookup.get(
+            postgres_type_field_base_type = get_base_postgres_type_for_postgres_type(
                 postgres_type_field_type
             )
             if (
-                postgres_type_field_module is not None
-                and postgres_type_field_module != module_name
+                is_user_defined_type(postgres_type_field_base_type)
+                and postgres_type_field_base_type not in postgres_type_names
             ):
-                import_dict = update_python_type_import_dict(
-                    import_dict, postgres_type_field_module, postgres_type_field_type
+                python_type = get_python_type_for_postgres_type(
+                    postgres_type_field_base_type
                 )
+                postgres_type_field_module = python_postgres_module_lookup.get(
+                    python_type
+                )
+                if postgres_type_field_module is not None:
+                    import_dict = update_python_type_import_dict(
+                        import_dict,
+                        postgres_type_field_module,
+                        python_type,
+                    )
+                else:
+                    print(
+                        f"WARNING: Could not find module for {postgres_type_field_base_type}"
+                    )
     return get_import_statements_for_python_import_dict(import_dict)
 
 
 def get_python_code_for_postgres_types(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
-    module_name: str,
     postgres_types: list[PostgresType],
 ) -> str:
     python_type_codes = [
@@ -112,9 +126,13 @@ def get_python_code_for_postgres_types(
     python_code_str = "\n\n\n".join(python_type_codes)
     stdlib_python_imports = get_stdlib_imports_for_python_code_str(python_code_str)
     user_python_imports = get_user_imports_for_postgres_types(
-        python_postgres_module_lookup, module_name, postgres_types
+        python_postgres_module_lookup, postgres_types
     )
-    return f"{stdlib_python_imports}\n\n{user_python_imports}\n\n{python_code_str}"
+    return "\n\n".join(
+        code_block
+        for code_block in [stdlib_python_imports, user_python_imports, python_code_str]
+        if code_block != ""
+    )
 
 
 def get_postgres_types_for_postgres_statements(

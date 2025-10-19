@@ -69,6 +69,7 @@ def process_type_script_file(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     script_file: Path,
 ) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[PostgresType]]:
+    print(f"Processing type file {script_file}")
     return process_script_file(
         postgres_input_root_path,
         python_output_root_module,
@@ -86,6 +87,7 @@ def process_view_script_file(
     db_credentials: Optional[DbCredentials],
     script_file: Path,
 ):
+    print(f"Processing view file {script_file}")
     if roll_scripts and db_credentials is not None:
         run_in_script_file(db_credentials, script_file)
 
@@ -99,6 +101,7 @@ def process_function_script_file(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     script_file: Path,
 ) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[PostgresFunction]]:
+    print(f"Processing function file {script_file}")
     return process_script_file(
         postgres_input_root_path,
         python_output_root_module,

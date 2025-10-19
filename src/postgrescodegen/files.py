@@ -20,7 +20,7 @@ def get_db_script_files(source_dir: Path) -> list[Path]:
             file_name, extension = os.path.splitext(file)
             if extension == ".sql":
                 code_files.append(Path(os.path.join(root, f"{file_name}{extension}")))
-    return code_files
+    return sorted(code_files)
 
 
 def get_postgres_files_in_directory(code_dir: Path) -> PostgresFileResult:

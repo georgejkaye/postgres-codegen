@@ -19,9 +19,7 @@ def get_db_script_files(source_dir: Path) -> list[Path]:
         for file in files:
             file_name, extension = os.path.splitext(file)
             if extension == ".sql":
-                code_files.append(
-                    Path(os.path.join(root, f"{file_name}{extension}"))
-                )
+                code_files.append(Path(os.path.join(root, f"{file_name}{extension}")))
     return code_files
 
 

@@ -2,9 +2,9 @@
 poetry run python \
     -u \
     src/postgrescodegen/main.py \
-    --input $INPUT_SCRIPTS_DIR \
-    --output $OUTPUT_PACKAGE_DIR \
-    --module $OUTPUT_MODULE_NAME \
+    $INPUT_SCRIPTS_DIR \
+    $OUTPUT_PACKAGE_DIR \
+    $OUTPUT_MODULE_NAME \
     --resources /app/resources \
     --watch $WATCH_FILES \
     --roll $ROLL_SCRIPTS \

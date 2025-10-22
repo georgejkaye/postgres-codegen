@@ -5,7 +5,7 @@ poetry run python \
     --input $INPUT_SCRIPTS_DIR \
     --output $OUTPUT_PACKAGE_DIR \
     --module $OUTPUT_MODULE_NAME \
-    --resources $RESOURCES_DIR \
+    --resources /app/resources \
     --watch $WATCH_FILES \
     --roll $ROLL_SCRIPTS \
     --dbhost $DB_HOST \

@@ -83,7 +83,6 @@ def get_postgres_module_for_postgres_file[T: PythonablePostgresObject](
         [PythonPostgresModuleLookup, list[T]], str
     ],
     postgres_scripts_path: Path,
-    python_package_name: str,
     python_output_module: str,
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     file_path: Path,
@@ -104,9 +103,7 @@ def get_postgres_module_for_postgres_file[T: PythonablePostgresObject](
     )
     for postgres_object in postgres_objects:
         python_name = postgres_object.get_python_name()
-        python_postgres_module_lookup[python_name] = (
-            f"{python_package_name}.{python_module_name}"
-        )
+        python_postgres_module_lookup[python_name] = python_module_name
     python_postgres_module = PythonPostgresModule(
         python_module_name, postgres_objects, python_code
     )

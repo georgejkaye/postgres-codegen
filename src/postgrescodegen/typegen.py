@@ -148,7 +148,6 @@ def get_postgres_types_for_postgres_statements(
 
 def get_python_postgres_module_for_postgres_type_file(
     postgres_scripts_path: Path,
-    python_package_name: str,
     python_output_module: str,
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     file_path: Path,
@@ -157,7 +156,6 @@ def get_python_postgres_module_for_postgres_type_file(
         get_postgres_type_for_statement,
         get_python_code_for_postgres_types,
         postgres_scripts_path,
-        python_package_name,
         python_output_module,
         python_postgres_module_lookup,
         file_path,

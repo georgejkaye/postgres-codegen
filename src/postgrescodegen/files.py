@@ -8,7 +8,8 @@ from postgrescodegen.classes import PostgresFileResult
 def get_path_for_module(
     python_project_root: Path, python_module: str, is_leaf: bool
 ) -> Path:
-    python_module_relative_path = Path(python_module.replace(".", "/"))
+    child_modules = python_module.split(".", maxsplit=1)[1]
+    python_module_relative_path = Path(child_modules.replace(".", "/"))
     python_module_path = python_project_root / f"{python_module_relative_path}"
     return Path(f"{python_module_path}.py") if is_leaf else python_module_path
 
@@ -40,11 +41,11 @@ def clean_output_directory(python_package_path: Path, output_module: str):
 
 
 def write_python_file(output_root_path: Path, module_name: str, file_contents: str):
-    relative_module_path = Path(module_name.replace(".", "/"))
+    relative_module_path = Path(module_name.split(".", maxsplit=1)[1].replace(".", "/"))
     output_path = output_root_path / f"{relative_module_path}.py"
     parent_directory = output_path.parent
     parent_directory.mkdir(parents=True, exist_ok=True)
-    print(f"Writing {output_root_path.name}.{module_name} to {output_path}")
+    print(f"Writing {module_name} to {output_path}")
     with open(output_path, "w+") as f:
         f.write(file_contents)
 

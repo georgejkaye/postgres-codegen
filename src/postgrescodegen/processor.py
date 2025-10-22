@@ -37,17 +37,15 @@ def process_script_file[T: PostgresObject](
     db_credentials: Optional[DbCredentials],
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     get_script_file_module: Callable[
-        [Path, str, str, PythonPostgresModuleLookup, Path],
+        [Path, str, PythonPostgresModuleLookup, Path],
         tuple[PythonPostgresModuleLookup, PythonPostgresModule[T]],
     ],
     script_file: Path,
 ) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[T]]:
     if roll_scripts and db_credentials is not None:
         run_in_script_file(db_credentials, script_file)
-    python_package_name = python_package_path.name
     python_postgres_module_lookup, script_file_module = get_script_file_module(
         postgres_scripts_path,
-        python_package_name,
         python_output_module,
         python_postgres_module_lookup,
         script_file,
@@ -135,7 +133,7 @@ def copy_python_resources(
             relative_path = full_path.relative_to(python_resources_path)
             dest_path = (
                 python_source_root
-                / output_code_module.replace(".", "/")
+                / output_code_module.split(".", maxsplit=1)[1].replace(".", "/")
                 / relative_path
             )
             dest_path.parent.mkdir(parents=True, exist_ok=True)

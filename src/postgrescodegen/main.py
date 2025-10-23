@@ -91,7 +91,7 @@ def parse_arguments() -> InputArgs:
         with open(args.dbpassword, "r") as f:
             db_password = f.read().rstrip()
         db_credentials = DbCredentials(
-            args.dbname, args.dbport, args.dbname, args.dbuser, db_password
+            args.dbhost, args.dbport, args.dbname, args.dbuser, db_password
         )
     else:
         db_credentials = None

@@ -2,8 +2,8 @@
 poetry run python \
     -u \
     src/postgrescodegen/main.py \
-    $INPUT_SCRIPTS_DIR \
-    $OUTPUT_PACKAGE_DIR \
+    /app/input \
+    /app/output \
     $OUTPUT_MODULE_NAME \
     --resources /app/resources \
     --watch $WATCH_FILES \

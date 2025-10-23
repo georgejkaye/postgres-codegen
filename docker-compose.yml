@@ -8,7 +8,7 @@ services:
           POETRY_VERSION: 2.1.1
           INPUT_SCRIPTS_DIR: /app/input
           OUTPUT_PACKAGE_DIR: /app/output
-          OUTPUT_MODULE_NAME: test.db
+          OUTPUT_MODULE_NAME: ${OUTPUT_MODULE_NAME}
           WATCH_FILES: ${WATCH_FILES:-0}
           ROLL_SCRIPTS: ${ROLL_SCRIPTS:-0}
           DB_HOST: ${DB_HOST:-localhost}

@@ -9,7 +9,7 @@ poetry run python \
     --watch $WATCH_FILES \
     --roll $ROLL_SCRIPTS \
     --dbhost $DB_HOST \
-    --dbport $DB_PORT \
+    --dbport ${DB_PORT:-5432} \
     --dbuser $DB_USER \
     --dbname $DB_NAME \
     --dbpassword $DB_PASSWORD_FILE

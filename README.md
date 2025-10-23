@@ -99,7 +99,8 @@ poetry run python src/pythoncodegen \
 ### Docker Compose
 
 To avoid faffing around with dependencies you can run the tool in a [Docker](https://www.docker.com/) container.
-The easiest way to do this is by using [Docker Compose](https://docs.docker.com/compose/) and including the following in your `docker-compose.yml` file.
+The easiest way to do this is by using [Docker Compose](https://docs.docker.com/compose/) and
+including the following in your `docker-compose.yml` file.
 
 ```yml
 services:
@@ -114,6 +115,9 @@ services:
             DB_USER: george
             DB_NAME: db
             DB_PASSWORD_FILE: /run/secrets/db_secret
+        volumes:
+            - ${INPUT_SCRIPT_DIR}:/app/input
+            - ${OUTPUT_PACKAGE_DIR}:/app/output
         secrets:
             - db_secret
 

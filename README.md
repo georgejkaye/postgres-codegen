@@ -22,7 +22,7 @@ scripts
 ...and generates Python code for interacting with the functions in the following form:
 
 ```
- project
+ package
  | db
  | | types
  | | | a.py
@@ -33,17 +33,18 @@ scripts
 ```
 
 
-## Usage
+## Running the tool
 
 ### Inputs
 
 However you run the tool, there are several arguments you will need to specify, summarised below.
 
-|Input|Python argument|Environment variable|Notes|When required|Default|
+|Input|Argument (Python)|Environment variable (Docker)|Notes|When required|Default|
 |-|-|-|-|-|-|
-| Input scripts directory | `--input` | `INPUT_SCRIPTS_DIR` | The directory containing all of the Postgres `*.sql` files to process ||
-| Output package directory | `--output` | `OUTPUT_PACKAGE_DIR`|  The root directory of the Python package to generate the output it ||
-| Output module name | `--module` | `OUTPUT_MODULE_NAME` | The absolute name of the module to put the generated output in, including the package root name ||
+| Input scripts directory | | volume `/app/input` | The directory containing all of the Postgres `*.sql` files to process, structured as detailed above ||
+| Output package directory | | volume `/app/output` |  The root directory of the Python package to generate the output ||
+| Output module name | | `OUTPUT_MODULE_NAME` | The absolute name of the module to put the generated output in, including the package name (e.g. the above example would be `package.db`) ||
+| Resources directory | `--module` | included in container | Path to the provided resources directory | | `<main.py>/../../resources` |
 | Watch mode | `--watch` | `WATCH_FILES` | Whether to continuously monitor files in the scripts directory | | `0` |
 | Roll mode | `--roll` | `ROLL_SCRIPTS` | Whether to roll in scripts to the db after generating code | | `0` |
 | Database host | `--dbhost` | `DB_HOST` | Host of the db to roll scripts into | For rolling in scripts | `localhost` |
@@ -61,7 +62,7 @@ To set up the virtual environment, run:
 poetry install
 ```
 
-Once you have that installed, you can generate your code
+Once you have that installed, you can generate your code:
 
 ```sh
 poetry run python src/pythoncodegen \
@@ -105,8 +106,6 @@ services:
     codegen:
         image: georgejkaye/postgres-codegen:latest
         environment:
-            INPUT_SCRIPTS_DIR: /app/input
-            OUTPUT_PACKAGE_DIR: /app/output
             OUTPUT_MODULE_NAME: output.db
             WATCH_MODE: 1
             ROLL_MODE: 1
@@ -144,3 +143,114 @@ docker build -t docker-codegen .
 ```
 
 Unfortunately secrets are a little more complicated in this scenario, so you may have to set up a [Docker Swarm](https://docs.docker.com/engine/swarm/) to set up your [secrets](https://docs.docker.com/engine/swarm/secrets/).
+
+## Generating code
+
+### Writing db code
+
+First of course you'll need to write your db code!
+The tool recognises types and functions of the following form
+(modulo unnecessary whitespace, which is all stripped out before processing).
+
+```sql
+-- input/types/row.sql
+
+CREATE TYPE output_row AS (
+    field1 INT,
+    field2 TEXT
+);
+```
+
+```sql
+-- input/functions/row.sql
+
+CREATE OR REPLACE FUNCTION select_rows (
+    arg1 INT,
+    arg2 TEXT
+)
+RETURNS SETOF output_row
+LANGUAGE sql -- other languages are available
+AS
+$$
+SELECT field1, field2 FROM row_table;
+$$;
+```
+
+As Postgres does not provide a native way to declare fields of types as nullable, by default all fields will be mapped
+to `Optional` types in the generated Python code.
+To avoid this, you can define your fields using the non-null domains defined in `resources/sql/domains.sql`.
+These are run in automatically alongside the rest of your code in you use the `ROLL_SCRIPTS` option.
+
+| Postgres type | Non-null domain |
+|-|-|
+| `TEXT` | `TEXT_NOTNULL` |
+| `INTEGER` | `TEXT_NOTNULL` |
+| `DECIMAL` | `TEXT_NOTNULL` |
+| `TIMESTAMP WITH TIME ZONE` | `TIMESTAMP_NOTNULL` |
+| `INTERVAL` | `INTERVAL_NOTNULL` |
+| `BOOLEAN` | `BOOLEAN_NOTNULL` |
+
+Note that returning nullable types is currently not supported,
+and all returned composite types are treated as non-nullable accordingly.
+
+
+### Registering the types
+
+When talking to a Postgres database using Psycopg 3, you must *register* all the Postgres types used so they can be appropriately encoded.
+To do this a `types/register.py` script is generated containing a function you can call to register all the types.
+
+```py
+def register_types(conn: psycopg.Connection) -> None
+```
+
+This can be called at the start of your program to initialise everything.
+This ensures  that
+
+```py
+from psycopg import Connection
+
+conn = Connection.connect(
+    host="georgejkaye.com",
+    dbname="db",
+    user="db",
+    password="password"
+)
+register_types(conn)
+```
+
+### Calling the functions
+
+Then you can call the generated functions!
+For each non-`VOID` returning function in the input script directory,
+two python functions are generated: one to fetch a single row
+(which may return `None` if the db function doesn't return a row at all),
+and one to fetch all the rows.
+
+```sql
+CREATE OR REPLACE FUNCTION select_rows (
+    arg1 INTEGER_NOTNULL,
+    arg2 TEXT
+)
+RETURNS SETOF output_row
+```
+
+```py
+def select_rows_fetchone(conn: psycopg.Connection, arg1: int, arg2: Optional[str]) -> Optional[OutputRow]:
+
+def select_rows_fetchall(conn: psycopg.Connection, arg1: int, arg2: Optional[str]) -> list[OutputRow]:
+```
+
+For `VOID`-returning functions, there's no need for multiple functions so only a single one is created.
+
+
+```sql
+CREATE OR REPLACE FUNCTION insert_rows (
+    arg1 TIMESTAMP_NOTNULL,
+    arg2 row_data
+)
+RETURNS VOID
+```
+
+```py
+def insert_rows(conn: psycopg.Connection, arg1: datetime, arg2: RowData) -> None:
+```

@@ -15,6 +15,7 @@ from postgrescodegen.generator import (
     update_python_type_import_dict,
 )
 from postgrescodegen.pytypes import (
+    get_base_python_type_for_python_type,
     get_python_type_for_base_type_of_postgres_type,
     get_python_type_for_postgres_type,
 )
@@ -296,10 +297,11 @@ def get_import_for_postgres_type(
         python_imports_dict = update_python_type_import_dict(
             python_imports_dict, "dataclasses", "astuple"
         )
-    type_module = python_postgres_module_lookup.get(python_type_name)
+    base_python_type = get_base_python_type_for_python_type(python_type_name)
+    type_module = python_postgres_module_lookup.get(base_python_type)
     if type_module is not None:
         user_imports_dict = update_python_type_import_dict(
-            user_imports_dict, type_module, python_type_name
+            user_imports_dict, type_module, base_python_type
         )
     return python_imports_dict, user_imports_dict
 

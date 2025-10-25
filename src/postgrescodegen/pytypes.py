@@ -63,3 +63,11 @@ def get_python_type_for_postgres_type(type_string: str) -> str:
 def get_base_python_type_for_postgres_type(type_string: str) -> str:
     base_type_string = get_base_postgres_type_for_postgres_type(type_string)
     return get_python_type_for_postgres_base_type(base_type_string)
+
+
+def get_base_python_type_for_python_type(python_type: str) -> str:
+    if len(python_type) > 5 and python_type[:5] == "list[":
+        return get_base_python_type_for_python_type(python_type[5:-1])
+    if len(python_type) > 9 and python_type[:9] == "Optional[":
+        return get_base_python_type_for_python_type(python_type[9:-1])
+    return python_type

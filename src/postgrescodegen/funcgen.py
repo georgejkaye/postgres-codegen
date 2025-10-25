@@ -14,6 +14,7 @@ from postgrescodegen.generator import (
     get_postgres_module_for_postgres_file,
     update_python_type_import_dict,
 )
+from postgrescodegen.pgtypes import is_user_defined_type
 from postgrescodegen.pytypes import (
     get_base_python_type_for_python_type,
     get_python_type_for_base_type_of_postgres_type,
@@ -146,10 +147,7 @@ def get_python_db_inputs(
             )
         )
         postgres_argument_type = postgres_function_arg.argument_type
-        python_base_type = get_python_type_for_base_type_of_postgres_type(
-            postgres_argument_type
-        )
-        if python_base_type is not None:
+        if not is_user_defined_type(postgres_argument_type):
             tuple_expression = python_argument_name
         elif "[]" in postgres_function_arg.argument_type:
             tuple_expression = get_python_list_of_tuples_for_list_of_dataclasses(

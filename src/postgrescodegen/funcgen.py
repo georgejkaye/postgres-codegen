@@ -166,6 +166,8 @@ def get_python_cursor_initialisation_for_postgres_function(
     python_return_type = get_python_type_for_postgres_type(
         postgres_function.function_return
     )
+    if len(python_return_type) > 9 and python_return_type[:9] == "Optional[":
+        python_return_type = python_return_type[9:-1]
     return f"{base_indent * tab}with conn.cursor(row_factory=class_row({python_return_type})) as cur:"
 
 

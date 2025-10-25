@@ -297,10 +297,7 @@ def get_import_for_postgres_type(
         )
     if "list[" in python_type_name:
         python_type_name = python_type_name[5:-1]
-    if (
-        get_python_type_for_base_type_of_postgres_type(postgres_type_name) is None
-        and is_argument
-    ):
+    if is_user_defined_type(postgres_type_name) and is_argument:
         python_imports_dict = update_python_type_import_dict(
             python_imports_dict, "dataclasses", "astuple"
         )

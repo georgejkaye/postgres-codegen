@@ -2,31 +2,26 @@ postgres_primitives = set(
     [
         "VOID",
         "TEXT",
-        "TEXT_NOTNULL",
         "INT",
         "INTEGER",
-        "INTEGER_NOTNULL",
         "BIGINT",
-        "BIGINT_NOTNULL",
         "DECIMAL",
         "NUMERIC",
-        "DECIMAL_NOTNULL",
         "TIMESTAMP",
         "TIMESTAMP WITH TIME ZONE",
         "TIMESTAMP WITHOUT TIME ZONE",
-        "TIMESTAMP_NOTNULL",
         "INTERVAL",
-        "INTERVAL_NOTNULL",
         "DATERANGE",
-        "DATERANGE_NOTNULL",
         "BOOLEAN",
-        "BOOLEAN_NOTNULL",
     ]
 )
 
 
 def is_user_defined_type(postgres_type_name: str) -> bool:
-    return postgres_type_name not in postgres_primitives
+    return (
+        get_base_postgres_type_for_postgres_type(postgres_type_name)
+        not in postgres_primitives
+    )
 
 
 def is_postgres_array_type(postgres_type_name: str) -> bool:

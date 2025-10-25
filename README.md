@@ -189,6 +189,7 @@ These are run in automatically alongside the rest of your code in you use the `R
 |-|-|
 | `TEXT` | `TEXT_NOTNULL` |
 | `INTEGER` | `TEXT_NOTNULL` |
+| `BIGINT` | `BIGINT_NOTNULL` |
 | `DECIMAL` | `TEXT_NOTNULL` |
 | `TIMESTAMP WITH TIME ZONE` | `TIMESTAMP_NOTNULL` |
 | `INTERVAL` | `INTERVAL_NOTNULL` |

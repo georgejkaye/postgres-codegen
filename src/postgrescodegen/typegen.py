@@ -14,10 +14,13 @@ from postgrescodegen.generator import (
     get_postgres_module_for_postgres_file,
     update_python_type_import_dict,
 )
-from postgrescodegen.pgtypes import get_base_postgres_type_for_postgres_type
-from postgrescodegen.pytypes import (
-    get_python_type_for_postgres_type,
+from postgrescodegen.pgtypes import (
+    get_base_postgres_type_for_postgres_type,
     is_user_defined_type,
+)
+from postgrescodegen.pytypes import (
+    get_base_python_type_for_postgres_type,
+    get_python_type_for_postgres_type,
 )
 
 tab = "    "
@@ -97,7 +100,7 @@ def get_user_imports_for_postgres_types(
                 is_user_defined_type(postgres_type_field_base_type)
                 and postgres_type_field_base_type not in postgres_type_names
             ):
-                python_type = get_python_type_for_postgres_type(
+                python_type = get_base_python_type_for_postgres_type(
                     postgres_type_field_base_type
                 )
                 postgres_type_field_module = python_postgres_module_lookup.get(

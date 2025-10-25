@@ -95,6 +95,8 @@ def get_python_function_declaration_for_postgres_function(
     return_type_string = get_python_type_for_postgres_type(
         postgres_function.function_return
     )
+    if len(return_type_string) > 9 and return_type_string[:9] == "Optional[":
+        return_type_string = return_type_string[9:-1]
     if return_type_string == "None":
         return_type_string = "None"
         function_name = postgres_function.function_name

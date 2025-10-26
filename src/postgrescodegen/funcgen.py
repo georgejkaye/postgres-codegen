@@ -20,7 +20,6 @@ from postgrescodegen.pgtypes import (
 )
 from postgrescodegen.pytypes import (
     get_base_python_type_for_python_type,
-    get_python_type_for_base_type_of_postgres_type,
     get_python_type_for_postgres_type,
 )
 

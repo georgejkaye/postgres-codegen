@@ -1,6 +1,6 @@
 import os
-import shutil
 from pathlib import Path
+import shutil
 
 from postgrescodegen.classes import PostgresFileResult
 
@@ -31,16 +31,35 @@ def get_postgres_files_in_directory(code_dir: Path) -> PostgresFileResult:
     return PostgresFileResult(type_files, view_files, function_files)
 
 
-def clean_output_directory(python_package_path: Path, output_module: str):
+def is_directory_in_generated_files(generated_files: list[Path], dirname: str) -> bool:
+    for file in generated_files:
+        if dirname in str(file):
+            return True
+    return False
+
+
+def clean_output_directory(
+    python_package_path: Path, output_module: str, generated_files: list[Path]
+):
     dest_module_path = get_path_for_module(
         python_package_path, output_module, is_leaf=False
     )
-    if os.path.exists(dest_module_path):
-        print(f"Cleaning {dest_module_path}")
-        shutil.rmtree(dest_module_path)
+    print(f"Cleaning up old files in {dest_module_path}")
+    for dirname, _, files in os.walk(dest_module_path):
+        if not is_directory_in_generated_files(generated_files, dirname):
+            print(f"Removing directory {dirname}")
+            shutil.rmtree(dirname)
+            continue
+        for file in files:
+            full_file_path = Path(dirname) / file
+            if full_file_path not in generated_files:
+                print(f"Removing file {full_file_path}")
+                os.remove(full_file_path)
 
 
-def write_python_file(output_root_path: Path, module_name: str, file_contents: str):
+def write_python_file(
+    output_root_path: Path, module_name: str, file_contents: str
+) -> Path:
     relative_module_path = Path(module_name.split(".", maxsplit=1)[1].replace(".", "/"))
     output_path = output_root_path / f"{relative_module_path}.py"
     parent_directory = output_path.parent
@@ -48,6 +67,7 @@ def write_python_file(output_root_path: Path, module_name: str, file_contents: s
     print(f"Writing {module_name} to {output_path}")
     with open(output_path, "w+") as f:
         f.write(file_contents)
+    return output_path
 
 
 def get_python_module_name_for_postgres_file(
@@ -68,11 +88,14 @@ def get_python_module_name_for_postgres_file(
 
 def create_py_typed_files_in_directory(
     python_package_path: Path, python_output_module: str
-):
+) -> list[Path]:
     python_output_module_path = get_path_for_module(
         python_package_path, python_output_module, False
     )
+    generated_files: list[Path] = []
     for root, _, _ in os.walk(python_output_module_path):
         py_typed_file = Path(root) / "py.typed"
         with open(py_typed_file, "w") as _:
             pass
+        generated_files.append(py_typed_file)
+    return generated_files

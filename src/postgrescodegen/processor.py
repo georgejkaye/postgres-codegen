@@ -41,7 +41,7 @@ def process_script_file[T: PostgresObject](
         tuple[PythonPostgresModuleLookup, PythonPostgresModule[T]],
     ],
     script_file: Path,
-) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[T], Path]:
+) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[T], Optional[Path]]:
     if roll_scripts and db_credentials is not None:
         run_in_script_file(db_credentials, script_file)
     python_postgres_module_lookup, script_file_module = get_script_file_module(
@@ -50,11 +50,14 @@ def process_script_file[T: PostgresObject](
         python_postgres_module_lookup,
         script_file,
     )
-    generated_file_path = write_python_file(
-        python_package_path,
-        script_file_module.module_name,
-        script_file_module.python_code,
-    )
+    if len(script_file_module.module_objects) > 0:
+        generated_file_path = write_python_file(
+            python_package_path,
+            script_file_module.module_name,
+            script_file_module.python_code,
+        )
+    else:
+        generated_file_path = None
     return python_postgres_module_lookup, script_file_module, generated_file_path
 
 
@@ -66,7 +69,9 @@ def process_type_script_file(
     db_credentials: Optional[DbCredentials],
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     script_file: Path,
-) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[PostgresType], Path]:
+) -> tuple[
+    PythonPostgresModuleLookup, PythonPostgresModule[PostgresType], Optional[Path]
+]:
     print(f"Processing type file {script_file}")
     return process_script_file(
         postgres_input_root_path,
@@ -98,7 +103,9 @@ def process_function_script_file(
     db_credentials: Optional[DbCredentials],
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     script_file: Path,
-) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[PostgresFunction], Path]:
+) -> tuple[
+    PythonPostgresModuleLookup, PythonPostgresModule[PostgresFunction], Optional[Path]
+]:
     print(f"Processing function file {script_file}")
     return process_script_file(
         postgres_input_root_path,
@@ -178,8 +185,9 @@ def process_user_script_files(
                 file,
             )
         )
-        postgres_types.extend(module.module_objects)
-        generated_files.append(generated_file_path)
+        if generated_file_path is not None:
+            postgres_types.extend(module.module_objects)
+            generated_files.append(generated_file_path)
     generated_file_path = process_register_types_file(
         python_source_root,
         output_code_module,
@@ -199,7 +207,8 @@ def process_user_script_files(
             python_postgres_module_lookup,
             file,
         )
-        generated_files.append(generated_file_path)
+        if generated_file_path is not None:
+            generated_files.append(generated_file_path)
     return generated_files
 
 

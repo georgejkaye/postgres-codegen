@@ -313,7 +313,7 @@ def get_imports_for_postgres_function_file(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     postgres_functions: list[PostgresFunction],
 ) -> str:
-    class_row_required = False
+    non_void_returning_function = False
     python_imports_dict: dict[str, set[str]] = {}
     user_imports_dict: dict[str, set[str]] = {}
     for postgres_function in postgres_functions:
@@ -325,7 +325,7 @@ def get_imports_for_postgres_function_file(
             False,
         )
         if postgres_function.function_return != "VOID":
-            class_row_required = True
+            non_void_returning_function = True
         for function_arg in postgres_function.function_args:
             python_imports_dict, user_imports_dict = get_import_for_postgres_type(
                 python_postgres_module_lookup,
@@ -337,8 +337,9 @@ def get_imports_for_postgres_function_file(
     psycopg_imports = [
         "from psycopg import Connection",
     ]
-    if class_row_required:
+    if non_void_returning_function:
         psycopg_imports.append("from psycopg.rows import class_row")
+        update_python_type_import_dict(python_imports_dict, "typing", "Optional")
     psycopg_imports_string = "\n".join(psycopg_imports)
     python_imports_string = get_import_statements_for_python_import_dict(
         python_imports_dict

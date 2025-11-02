@@ -66,13 +66,13 @@ class PostgresType(PythonablePostgresObject):
 @dataclass
 class PostgresDomain(PythonablePostgresObject):
     domain_name: str
-    domain_type: str
+    underlying_type: str
 
     def get_name(self) -> str:
         return self.domain_name
 
     def get_python_name(self) -> str:
-        return get_python_name_for_postgres_type_name(self.domain_type)
+        return get_python_name_for_postgres_type_name(self.underlying_type)
 
 
 @dataclass

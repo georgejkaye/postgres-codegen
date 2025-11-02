@@ -16,12 +16,29 @@ tab = "    "
 
 def get_register_type_function() -> str:
     lines = [
-        "def register_type(conn: Connection, name: str, factory: type):",
-        f"{tab}info = CompositeInfo.fetch(conn, name)",
+        "def register_type(conn: Connection, type_name: str, factory: type):",
+        f"{tab}info = CompositeInfo.fetch(conn, type_name)",
         f"{tab}if info is not None:",
         f"{tab * 2}register_composite(info, conn, factory)",
         f"{tab}else:",
-        f'{tab*2}raise RuntimeError(f"Could not find composite type {{name}}")',
+        f'{tab*2}raise RuntimeError(f"Could not find composite type {{type_name}}")',
+    ]
+    return "\n".join(lines)
+
+
+def get_register_domain_function() -> str:
+    lines = [
+        "def register_domain(conn: Connection, domain_name: str, underlying_type_name: str, factory: type):",
+        f"{tab}domain_info = CompositeInfo.fetch(conn, domain_name)",
+        f"{tab}underlying_type_info = CompositeInfo.fetch(conn, underlying_type_name)",
+        f"{tab}if domain_info is not None and underlying_type_name is not None:",
+        f"{tab * 2}domain_info.field_names = underlying_type_info.field_names",
+        f"{tab * 2}domain_info.field_types = underlying_type_info.field_types",
+        f"{tab * 2}register_composite(domain_info, conn, factory)",
+        f"{tab}elif domain_info is None:",
+        f'{tab*2}raise RuntimeError(f"Could not find domain {{domain_name}}")',
+        f"{tab}else:",
+        f'{tab*2}raise RuntimeError(f"Could not find underlying type {{underlying_type_name}}")',
     ]
     return "\n".join(lines)
 
@@ -30,6 +47,12 @@ def get_register_type_function_call(
     indent: int, postgres_type: PythonablePostgresObject
 ) -> str:
     return f'{tab * indent}register_type(conn, "{postgres_type.get_name()}", {postgres_type.get_python_name()})'
+
+
+def get_register_domain_function_call(
+    indent: int, postgres_domain: PostgresDomain
+) -> str:
+    return f'{tab * indent}register_domain(conn, "{postgres_domain.domain_name}", "{postgres_domain.underlying_type}", {postgres_domain.get_python_name()})'
 
 
 def get_register_types_function_calls(
@@ -42,7 +65,7 @@ def get_register_types_function_calls(
         for postgres_type in postgres_types
     )
     python_domain_registers = "\n".join(
-        get_register_type_function_call(indent, postgres_domain)
+        get_register_domain_function_call(indent, postgres_domain)
         for postgres_domain in postgres_domains
     )
     return "\n\n".join([python_type_registers, python_domain_registers])
@@ -100,7 +123,15 @@ def get_register_module_code(
     )
     imports = "\n\n".join([psycopg_imports, type_imports])
     register_type_function = get_register_type_function()
+    register_domain_function = get_register_domain_function()
     register_all_types_function = get_register_all_types_function(
         postgres_types, postgres_domains
     )
-    return "\n\n\n".join([imports, register_type_function, register_all_types_function])
+    return "\n\n\n".join(
+        [
+            imports,
+            register_type_function,
+            register_domain_function,
+            register_all_types_function,
+        ]
+    )

@@ -1,7 +1,10 @@
 from postgrescodegen.classes import (
+    PostgresDomain,
     PostgresType,
     PythonImportDict,
     PythonPostgresModuleLookup,
+    PythonableObject,
+    PythonablePostgresObject,
 )
 from postgrescodegen.generator import (
     get_import_statements_for_python_import_dict,
@@ -23,43 +26,68 @@ def get_register_type_function() -> str:
     return "\n".join(lines)
 
 
-def get_register_type_function_call(indent: int, postgres_type: PostgresType) -> str:
-    return f'{tab * indent}register_type(conn, "{postgres_type.type_name}", {postgres_type.get_python_name()})'
+def get_register_type_function_call(
+    indent: int, postgres_type: PythonablePostgresObject
+) -> str:
+    return f'{tab * indent}register_type(conn, "{postgres_type.get_name()}", {postgres_type.get_python_name()})'
 
 
 def get_register_types_function_calls(
-    indent: int, postgres_types: list[PostgresType]
+    indent: int,
+    postgres_types: list[PostgresType],
+    postgres_domains: list[PostgresDomain],
 ) -> str:
-    return "\n".join(
+    python_type_registers = "\n".join(
         get_register_type_function_call(indent, postgres_type)
         for postgres_type in postgres_types
     )
+    python_domain_registers = "\n".join(
+        get_register_type_function_call(indent, postgres_domain)
+        for postgres_domain in postgres_domains
+    )
+    return "\n\n".join([python_type_registers, python_domain_registers])
+
+
+def update_python_type_import_dict_for_type_name(
+    python_postgres_module_lookup: PythonPostgresModuleLookup,
+    python_type: PythonableObject,
+    import_dict: PythonImportDict,
+) -> PythonImportDict:
+    python_name = python_type.get_python_name()
+    module_name = python_postgres_module_lookup[python_name]
+    import_dict = update_python_type_import_dict(import_dict, module_name, python_name)
+    return import_dict
 
 
 def get_register_types_imports(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     postgres_types: list[PostgresType],
+    postgres_domains: list[PostgresDomain],
 ) -> str:
     import_dict: PythonImportDict = {}
     for postgres_type in postgres_types:
-        module_name = python_postgres_module_lookup[postgres_type.get_python_name()]
-        python_name = postgres_type.get_python_name()
-        import_dict = update_python_type_import_dict(
-            import_dict, module_name, python_name
+        import_dict = update_python_type_import_dict_for_type_name(
+            python_postgres_module_lookup, postgres_type, import_dict
+        )
+    for postgres_domain in postgres_domains:
+        import_dict = update_python_type_import_dict_for_type_name(
+            python_postgres_module_lookup, postgres_domain, import_dict
         )
     return get_import_statements_for_python_import_dict(import_dict)
 
 
 def get_register_all_types_function(
     postgres_types: list[PostgresType],
+    postgres_domains: list[PostgresDomain],
 ) -> str:
     function_declaration = "def register_types(conn: Connection):"
-    return f"{function_declaration}\n{get_register_types_function_calls(1, postgres_types)}"
+    return f"{function_declaration}\n{get_register_types_function_calls(1, postgres_types, postgres_domains)}"
 
 
 def get_register_module_code(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     postgres_types: list[PostgresType],
+    postgres_domains: list[PostgresDomain],
 ) -> str:
     psycopg_imports = "\n".join(
         [
@@ -68,9 +96,11 @@ def get_register_module_code(
         ]
     )
     type_imports = get_register_types_imports(
-        python_postgres_module_lookup, postgres_types
+        python_postgres_module_lookup, postgres_types, postgres_domains
     )
     imports = "\n\n".join([psycopg_imports, type_imports])
     register_type_function = get_register_type_function()
-    register_all_types_function = get_register_all_types_function(postgres_types)
+    register_all_types_function = get_register_all_types_function(
+        postgres_types, postgres_domains
+    )
     return "\n\n\n".join([imports, register_type_function, register_all_types_function])

@@ -64,6 +64,18 @@ class PostgresType(PythonablePostgresObject):
 
 
 @dataclass
+class PostgresDomain(PythonablePostgresObject):
+    domain_name: str
+    domain_type: str
+
+    def get_name(self) -> str:
+        return self.domain_name
+
+    def get_python_name(self) -> str:
+        return get_python_name_for_postgres_type_name(self.domain_type)
+
+
+@dataclass
 class PythonPostgresModule[T: PostgresObject]:
     module_name: str
     module_objects: list[T]

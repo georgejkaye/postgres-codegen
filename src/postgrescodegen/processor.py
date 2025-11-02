@@ -6,11 +6,16 @@ from typing import Callable, Optional
 
 from postgrescodegen.classes import (
     DbCredentials,
+    PostgresDomain,
     PostgresFunction,
     PostgresObject,
     PostgresType,
     PythonPostgresModule,
     PythonPostgresModuleLookup,
+)
+from postgrescodegen.domaingen import (
+    get_postgres_domain_for_statement,
+    get_python_code_for_postgres_domain,
 )
 from postgrescodegen.files import (
     clean_output_directory,
@@ -22,6 +27,7 @@ from postgrescodegen.files import (
 from postgrescodegen.funcgen import (
     get_python_postgres_module_for_postgres_function_file,
 )
+from postgrescodegen.generator import get_postgres_module_for_postgres_file
 from postgrescodegen.register import get_register_module_code
 from postgrescodegen.runner import run_in_script_file
 from postgrescodegen.typegen import (
@@ -164,10 +170,10 @@ def process_register_types_file(
     output_module_name: str,
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     postgres_types: list[PostgresType],
+    postgres_domains: list[PostgresDomain],
 ) -> Path:
     register_type_module = get_register_module_code(
-        python_postgres_module_lookup,
-        postgres_types,
+        python_postgres_module_lookup, postgres_types, postgres_domains
     )
     return write_python_file(
         output_root_path, f"{output_module_name}.types.register", register_type_module

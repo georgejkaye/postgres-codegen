@@ -31,7 +31,7 @@ def get_register_domain_function() -> str:
         "def register_domain(conn: Connection, domain_name: str, underlying_type_name: str, factory: type):",
         f"{tab}domain_info = CompositeInfo.fetch(conn, domain_name)",
         f"{tab}underlying_type_info = CompositeInfo.fetch(conn, underlying_type_name)",
-        f"{tab}if domain_info is not None and underlying_type_name is not None:",
+        f"{tab}if domain_info is not None and underlying_type_info is not None:",
         f"{tab * 2}domain_info.field_names = underlying_type_info.field_names",
         f"{tab * 2}domain_info.field_types = underlying_type_info.field_types",
         f"{tab * 2}register_composite(domain_info, conn, factory)",

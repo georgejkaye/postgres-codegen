@@ -41,24 +41,30 @@ def process_script_file[T: PostgresObject](
         tuple[PythonPostgresModuleLookup, PythonPostgresModule[T]],
     ],
     script_file: Path,
-) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[T], Optional[Path]]:
-    if roll_scripts and db_credentials is not None:
-        run_in_script_file(db_credentials, script_file)
-    python_postgres_module_lookup, script_file_module = get_script_file_module(
-        postgres_scripts_path,
-        python_output_module,
-        python_postgres_module_lookup,
-        script_file,
-    )
-    if len(script_file_module.module_objects) > 0:
-        generated_file_path = write_python_file(
-            python_package_path,
-            script_file_module.module_name,
-            script_file_module.python_code,
+) -> Optional[
+    tuple[PythonPostgresModuleLookup, PythonPostgresModule[T], Optional[Path]]
+]:
+    try:
+        if roll_scripts and db_credentials is not None:
+            run_in_script_file(db_credentials, script_file)
+        python_postgres_module_lookup, script_file_module = get_script_file_module(
+            postgres_scripts_path,
+            python_output_module,
+            python_postgres_module_lookup,
+            script_file,
         )
-    else:
-        generated_file_path = None
-    return python_postgres_module_lookup, script_file_module, generated_file_path
+        if len(script_file_module.module_objects) > 0:
+            generated_file_path = write_python_file(
+                python_package_path,
+                script_file_module.module_name,
+                script_file_module.python_code,
+            )
+        else:
+            generated_file_path = None
+        return python_postgres_module_lookup, script_file_module, generated_file_path
+    except Exception as e:
+        print(f"Error processing script file {script_file}: {e}")
+        return None
 
 
 def process_type_script_file(
@@ -69,8 +75,10 @@ def process_type_script_file(
     db_credentials: Optional[DbCredentials],
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     script_file: Path,
-) -> tuple[
-    PythonPostgresModuleLookup, PythonPostgresModule[PostgresType], Optional[Path]
+) -> Optional[
+    tuple[
+        PythonPostgresModuleLookup, PythonPostgresModule[PostgresType], Optional[Path]
+    ]
 ]:
     print(f"Processing type file {script_file}")
     return process_script_file(
@@ -103,8 +111,12 @@ def process_function_script_file(
     db_credentials: Optional[DbCredentials],
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     script_file: Path,
-) -> tuple[
-    PythonPostgresModuleLookup, PythonPostgresModule[PostgresFunction], Optional[Path]
+) -> Optional[
+    tuple[
+        PythonPostgresModuleLookup,
+        PythonPostgresModule[PostgresFunction],
+        Optional[Path],
+    ]
 ]:
     print(f"Processing function file {script_file}")
     return process_script_file(
@@ -173,32 +185,9 @@ def process_user_script_files(
     python_postgres_module_lookup: PythonPostgresModuleLookup = {}
     generated_files: list[Path] = []
     postgres_types: list[PostgresType] = []
+    postgres_domains: list[PostgresDomain] = []
     for file in user_files.type_files:
-        python_postgres_module_lookup, module, generated_file_path = (
-            process_type_script_file(
-                user_scripts_path,
-                output_code_module,
-                python_source_root,
-                roll_scripts,
-                db_credentials,
-                python_postgres_module_lookup,
-                file,
-            )
-        )
-        if generated_file_path is not None:
-            postgres_types.extend(module.module_objects)
-            generated_files.append(generated_file_path)
-    generated_file_path = process_register_types_file(
-        python_source_root,
-        output_code_module,
-        python_postgres_module_lookup,
-        postgres_types,
-    )
-    generated_files.append(generated_file_path)
-    for file in user_files.view_files:
-        process_view_script_file(roll_scripts, db_credentials, file)
-    for file in user_files.function_files:
-        _, _, generated_file_path = process_function_script_file(
+        type_module_result = process_type_script_file(
             user_scripts_path,
             output_code_module,
             python_source_root,
@@ -207,6 +196,46 @@ def process_user_script_files(
             python_postgres_module_lookup,
             file,
         )
+        if type_module_result is None:
+            continue
+        python_postgres_module_lookup, module, generated_file_path = type_module_result
+        if generated_file_path is not None:
+            postgres_types.extend(module.module_objects)
+            generated_files.append(generated_file_path)
+        python_postgres_module_lookup, domain_module_result = (
+            get_postgres_module_for_postgres_file(
+                get_postgres_domain_for_statement,
+                get_python_code_for_postgres_domain,
+                user_scripts_path,
+                output_code_module,
+                python_postgres_module_lookup,
+                file,
+            )
+        )
+        postgres_domains.extend(domain_module_result.module_objects)
+    generated_file_path = process_register_types_file(
+        python_source_root,
+        output_code_module,
+        python_postgres_module_lookup,
+        postgres_types,
+        postgres_domains,
+    )
+    generated_files.append(generated_file_path)
+    for file in user_files.view_files:
+        process_view_script_file(roll_scripts, db_credentials, file)
+    for file in user_files.function_files:
+        type_module_result = process_function_script_file(
+            user_scripts_path,
+            output_code_module,
+            python_source_root,
+            roll_scripts,
+            db_credentials,
+            python_postgres_module_lookup,
+            file,
+        )
+        if type_module_result is None:
+            continue
+        _, _, generated_file_path = type_module_result
         if generated_file_path is not None:
             generated_files.append(generated_file_path)
     return generated_files

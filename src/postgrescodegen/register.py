@@ -34,11 +34,24 @@ def get_register_domain_function() -> str:
         f"{tab}if domain_info is not None and underlying_type_info is not None:",
         f"{tab * 2}domain_info.field_names = underlying_type_info.field_names",
         f"{tab * 2}domain_info.field_types = underlying_type_info.field_types",
+        f"{tab * 2}domain_info.array_oid = underlying_type_info.array_oid",
         f"{tab * 2}register_composite(domain_info, conn, factory)",
         f"{tab}elif domain_info is None:",
         f'{tab*2}raise RuntimeError(f"Could not find domain {{domain_name}}")',
         f"{tab}else:",
         f'{tab*2}raise RuntimeError(f"Could not find underlying type {{underlying_type_name}}")',
+    ]
+    return "\n".join(lines)
+
+
+def get_register_primitive_notnull_domain_function() -> str:
+    lines = [
+        "def register_primitive_notnull_domain(conn: Connection, domain_name: str):",
+        f"{tab}info = TypeInfo.fetch(conn, domain_name)",
+        f"{tab}if info is not None:",
+        f"{tab * 2}info.register(conn)",
+        f"{tab}else:",
+        f'{tab*2}raise RuntimeError(f"Could not find primitive notnull domain {{domain_name}}")',
     ]
     return "\n".join(lines)
 
@@ -55,6 +68,24 @@ def get_register_domain_function_call(
     return f'{tab * indent}register_domain(conn, "{postgres_domain.domain_name}", "{postgres_domain.underlying_type}", {postgres_domain.get_python_name()})'
 
 
+def get_register_primitive_notnull_domain_function_call(
+    indent: int, postgres_domain: str
+) -> str:
+    return f'{tab * indent}register_primitive_notnull_domain(conn, "{postgres_domain}")'
+
+
+notnull_domains = [
+    "TEXT_NOTNULL",
+    "INTEGER_NOTNULL",
+    "BIGINT_NOTNULL",
+    "DECIMAL_NOTNULL",
+    "TIMESTAMP_NOTNULL",
+    "INTERVAL_NOTNULL",
+    "DATERANGE_NOTNULL",
+    "BOOLEAN_NOTNULL",
+]
+
+
 def get_register_types_function_calls(
     indent: int,
     postgres_types: list[PostgresType],
@@ -68,7 +99,17 @@ def get_register_types_function_calls(
         get_register_domain_function_call(indent, postgres_domain)
         for postgres_domain in postgres_domains
     )
-    return "\n\n".join([python_type_registers, python_domain_registers])
+    python_primitive_notnull_domain_registers = "\n".join(
+        get_register_primitive_notnull_domain_function_call(indent, domain_name)
+        for domain_name in notnull_domains
+    )
+    return "\n\n".join(
+        [
+            python_type_registers,
+            python_primitive_notnull_domain_registers,
+            python_domain_registers,
+        ]
+    )
 
 
 def update_python_type_import_dict_for_type_name(
@@ -115,6 +156,7 @@ def get_register_module_code(
     psycopg_imports = "\n".join(
         [
             "from psycopg import Connection",
+            "from psycopg.types import TypeInfo",
             "from psycopg.types.composite import CompositeInfo, register_composite",
         ]
     )
@@ -124,6 +166,9 @@ def get_register_module_code(
     imports = "\n\n".join([psycopg_imports, type_imports])
     register_type_function = get_register_type_function()
     register_domain_function = get_register_domain_function()
+    register_primitive_notnull_domain_function = (
+        get_register_primitive_notnull_domain_function()
+    )
     register_all_types_function = get_register_all_types_function(
         postgres_types, postgres_domains
     )
@@ -132,6 +177,7 @@ def get_register_module_code(
             imports,
             register_type_function,
             register_domain_function,
+            register_primitive_notnull_domain_function,
             register_all_types_function,
         ]
     )

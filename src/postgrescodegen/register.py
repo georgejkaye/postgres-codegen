@@ -65,7 +65,7 @@ def get_register_type_function_call(
 def get_register_domain_function_call(
     indent: int, postgres_domain: PostgresDomain
 ) -> str:
-    return f'{tab * indent}register_domain(conn, "{postgres_domain.domain_name}", "{postgres_domain.underlying_type}", {postgres_domain.get_python_name()})'
+    return f'{tab * indent}register_primitive_notnull_domain(conn, "{postgres_domain.domain_name}")'
 
 
 def get_register_primitive_notnull_domain_function_call(

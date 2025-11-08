@@ -1,7 +1,9 @@
 from abc import abstractmethod
 from dataclasses import dataclass
+from json import load
 from pathlib import Path
 from typing import Optional
+from unittest import loader
 
 from postgrescodegen.pynames import (
     get_python_name_for_postgres_function_name,
@@ -117,3 +119,18 @@ type PythonImportDict = dict[str, set[str]]
 class PythonImport:
     module: str
     token: str
+
+
+@dataclass
+class PsycopgLoader(PythonableObject):
+    loader_name: str
+    loader_module: str
+
+    def get_python_name(self) -> str:
+        return self.loader_name
+
+
+@dataclass
+class PsycopgDomainDetails:
+    domain_name: str
+    loader: Optional[PsycopgLoader]

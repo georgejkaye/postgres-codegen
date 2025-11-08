@@ -1,6 +1,8 @@
 from postgrescodegen.classes import (
     PostgresDomain,
     PostgresType,
+    PsycopgDomainDetails,
+    PsycopgLoader,
     PythonImportDict,
     PythonPostgresModuleLookup,
     PythonableObject,
@@ -32,6 +34,7 @@ def get_register_composite_domain_function() -> str:
         f"{tab}domain_info = CompositeInfo.fetch(conn, domain_name)",
         f"{tab}underlying_type_info = CompositeInfo.fetch(conn, underlying_type_name)",
         f"{tab}if domain_info is not None and underlying_type_info is not None:",
+        f"{tab * 2}domain_info.register(conn)",
         f"{tab * 2}domain_info.field_names = underlying_type_info.field_names",
         f"{tab * 2}domain_info.field_types = underlying_type_info.field_types",
         f"{tab * 2}domain_info.array_oid = underlying_type_info.array_oid",
@@ -46,12 +49,14 @@ def get_register_composite_domain_function() -> str:
 
 def get_register_domain_type_function() -> str:
     lines = [
-        "def register_domain_type(conn: Connection, domain_name: str):",
+        "def register_domain_type(conn: Connection, domain_name: str, loader: Optional[type]):",
         f"{tab}info = TypeInfo.fetch(conn, domain_name)",
         f"{tab}if info is not None:",
         f"{tab * 2}info.register(conn)",
+        f"{tab * 2}if loader is not None:",
+        f"{tab * 3}conn.adapters.register_loader(domain_name, loader)",
         f"{tab}else:",
-        f'{tab*2}raise RuntimeError(f"Could not find primitive notnull domain {{domain_name}}")',
+        f'{tab*2}raise RuntimeError(f"Could not find domain type {{domain_name}}")',
     ]
     return "\n".join(lines)
 
@@ -62,25 +67,44 @@ def get_register_type_function_call(
     return f'{tab * indent}register_composite_type(conn, "{postgres_type.get_name()}", {postgres_type.get_python_name()})'
 
 
+def get_register_domain_type_function_call(
+    indent: int, domain_details: PsycopgDomainDetails
+) -> str:
+    loader_string = (
+        domain_details.loader.loader_name if domain_details.loader else "None"
+    )
+    return f'{tab * indent}register_domain_type(conn, "{domain_details.domain_name}", {loader_string})'
+
+
 def get_register_composite_domain_type_function_call(
     indent: int, postgres_domain: PostgresDomain
 ) -> str:
     return f'{tab * indent}register_composite_domain_type(conn, "{postgres_domain.domain_name}", "{postgres_domain.underlying_type}", {postgres_domain.get_python_name()})'
 
 
-def get_register_domain_type_function_call(indent: int, postgres_domain: str) -> str:
-    return f'{tab * indent}register_domain_type(conn, "{postgres_domain}")'
-
-
 primitive_notnull_domains = [
-    "TEXT_NOTNULL",
-    "INTEGER_NOTNULL",
-    "BIGINT_NOTNULL",
-    "DECIMAL_NOTNULL",
-    "TIMESTAMP_NOTNULL",
-    "INTERVAL_NOTNULL",
-    "DATERANGE_NOTNULL",
-    "BOOLEAN_NOTNULL",
+    PsycopgDomainDetails("TEXT_NOTNULL", None),
+    PsycopgDomainDetails(
+        "INTEGER_NOTNULL", PsycopgLoader("IntLoader", "psycopg.types.numeric")
+    ),
+    PsycopgDomainDetails(
+        "BIGINT_NOTNULL", PsycopgLoader("IntLoader", "psycopg.types.numeric")
+    ),
+    PsycopgDomainDetails(
+        "DECIMAL_NOTNULL", PsycopgLoader("NumericLoader", "psycopg.types.numeric")
+    ),
+    PsycopgDomainDetails(
+        "TIMESTAMP_NOTNULL", PsycopgLoader("DateLoader", "psycopg.types.datetime")
+    ),
+    PsycopgDomainDetails(
+        "INTERVAL_NOTNULL", PsycopgLoader("IntervalLoader", "psycopg.types.datetime")
+    ),
+    PsycopgDomainDetails(
+        "DATERANGE_NOTNULL", PsycopgLoader("DateRangeLoader", "psycopg.types.range")
+    ),
+    PsycopgDomainDetails(
+        "BOOLEAN_NOTNULL", PsycopgLoader("BoolLoader", "psycopg.types.bool")
+    ),
 ]
 
 
@@ -94,12 +118,8 @@ def get_register_types_function_calls(
         for postgres_type in postgres_types
     )
     python_primitive_notnull_domain_registers = "\n".join(
-        get_register_domain_type_function_call(indent, domain_name)
-        for domain_name in primitive_notnull_domains
-    )
-    python_domain_registers = "\n".join(
-        get_register_domain_type_function_call(indent, postgres_domain.domain_name)
-        for postgres_domain in postgres_domains
+        get_register_domain_type_function_call(indent, domain)
+        for domain in primitive_notnull_domains
     )
     python_domain_composite_registers = "\n".join(
         get_register_composite_domain_type_function_call(indent, postgres_domain)
@@ -109,7 +129,6 @@ def get_register_types_function_calls(
         [
             python_type_registers,
             python_primitive_notnull_domain_registers,
-            python_domain_registers,
             python_domain_composite_registers,
         ]
     )
@@ -136,6 +155,16 @@ def get_register_types_imports(
         import_dict = update_python_type_import_dict_for_type_name(
             python_postgres_module_lookup, postgres_type, import_dict
         )
+    for primitive_domain in primitive_notnull_domains:
+        if primitive_domain.loader is not None:
+            python_postgres_module_lookup[primitive_domain.loader.loader_name] = (
+                primitive_domain.loader.loader_module
+            )
+            import_dict = update_python_type_import_dict_for_type_name(
+                python_postgres_module_lookup,
+                primitive_domain.loader,
+                import_dict,
+            )
     for postgres_domain in postgres_domains:
         import_dict = update_python_type_import_dict_for_type_name(
             python_postgres_module_lookup, postgres_domain, import_dict

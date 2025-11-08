@@ -187,6 +187,8 @@ def get_register_module_code(
 ) -> str:
     psycopg_imports = "\n".join(
         [
+            "from typing import Optional",
+            "\n",
             "from psycopg import Connection",
             "from psycopg.types import TypeInfo",
             "from psycopg.types.composite import CompositeInfo, register_composite",

@@ -94,7 +94,7 @@ primitive_notnull_domains = [
         "decimal_notnull", PsycopgLoader("NumericLoader", "psycopg.types.numeric")
     ),
     PsycopgDomainDetails(
-        "timestamp_notnull", PsycopgLoader("DateLoader", "psycopg.types.datetime")
+        "timestamp_notnull", PsycopgLoader("TimestamptzLoader", "psycopg.types.datetime")
     ),
     PsycopgDomainDetails(
         "interval_notnull", PsycopgLoader("IntervalLoader", "psycopg.types.datetime")

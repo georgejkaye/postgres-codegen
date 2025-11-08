@@ -83,27 +83,27 @@ def get_register_composite_domain_type_function_call(
 
 
 primitive_notnull_domains = [
-    PsycopgDomainDetails("TEXT_NOTNULL", None),
+    PsycopgDomainDetails("text_notnull", None),
     PsycopgDomainDetails(
-        "INTEGER_NOTNULL", PsycopgLoader("IntLoader", "psycopg.types.numeric")
+        "integer_notnull", PsycopgLoader("IntLoader", "psycopg.types.numeric")
     ),
     PsycopgDomainDetails(
-        "BIGINT_NOTNULL", PsycopgLoader("IntLoader", "psycopg.types.numeric")
+        "bigint_notnull", PsycopgLoader("IntLoader", "psycopg.types.numeric")
     ),
     PsycopgDomainDetails(
-        "DECIMAL_NOTNULL", PsycopgLoader("NumericLoader", "psycopg.types.numeric")
+        "decimal_notnull", PsycopgLoader("NumericLoader", "psycopg.types.numeric")
     ),
     PsycopgDomainDetails(
-        "TIMESTAMP_NOTNULL", PsycopgLoader("DateLoader", "psycopg.types.datetime")
+        "timestamp_notnull", PsycopgLoader("DateLoader", "psycopg.types.datetime")
     ),
     PsycopgDomainDetails(
-        "INTERVAL_NOTNULL", PsycopgLoader("IntervalLoader", "psycopg.types.datetime")
+        "interval_notnull", PsycopgLoader("IntervalLoader", "psycopg.types.datetime")
     ),
     PsycopgDomainDetails(
-        "DATERANGE_NOTNULL", PsycopgLoader("DateRangeLoader", "psycopg.types.range")
+        "daterange_notnull", PsycopgLoader("DateRangeLoader", "psycopg.types.range")
     ),
     PsycopgDomainDetails(
-        "BOOLEAN_NOTNULL", PsycopgLoader("BoolLoader", "psycopg.types.bool")
+        "boolean_notnull", PsycopgLoader("BoolLoader", "psycopg.types.bool")
     ),
 ]
 

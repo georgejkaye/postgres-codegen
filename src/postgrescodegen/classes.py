@@ -1,9 +1,7 @@
 from abc import abstractmethod
 from dataclasses import dataclass
-from json import load
 from pathlib import Path
 from typing import Optional
-from unittest import loader
 
 from postgrescodegen.pynames import (
     get_python_name_for_postgres_function_name,

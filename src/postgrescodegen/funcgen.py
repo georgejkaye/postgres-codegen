@@ -148,17 +148,18 @@ def get_python_db_inputs(
                 postgres_function_arg.argument_name
             )
         )
-        postgres_argument_type = get_base_postgres_type_for_postgres_type(
-            postgres_function_arg.argument_type
-        )
-        if not is_user_defined_type(postgres_argument_type):
-            tuple_expression = python_argument_name
-        elif "[]" in postgres_function_arg.argument_type:
-            tuple_expression = get_python_list_of_tuples_for_list_of_dataclasses(
-                postgres_function_arg
-            )
-        else:
-            tuple_expression = get_python_tuple_for_dataclass(postgres_function_arg)
+        # postgres_argument_type = get_base_postgres_type_for_postgres_type(
+        #     postgres_function_arg.argument_type
+        # )
+        tuple_expression = python_argument_name
+        # if not is_user_defined_type(postgres_argument_type):
+        #     tuple_expression = python_argument_name
+        # elif "[]" in postgres_function_arg.argument_type:
+        #     tuple_expression = get_python_list_of_tuples_for_list_of_dataclasses(
+        #         postgres_function_arg
+        #     )
+        # else:
+        #     tuple_expression = get_python_tuple_for_dataclass(postgres_function_arg)
         db_input_line = f"{base_indent * tab}{db_argument_name} = {tuple_expression}"
         lines.append(db_input_line)
     return "\n".join(lines)
@@ -296,10 +297,10 @@ def get_import_for_postgres_type(
         )
     if "list[" in python_type_name:
         python_type_name = python_type_name[5:-1]
-    if is_user_defined_type(postgres_type_name) and is_argument:
-        python_imports_dict = update_python_type_import_dict(
-            python_imports_dict, "dataclasses", "astuple"
-        )
+    # if is_user_defined_type(postgres_type_name) and is_argument:
+    #     python_imports_dict = update_python_type_import_dict(
+    #         python_imports_dict, "dataclasses", "astuple"
+    #     )
     base_python_type = get_base_python_type_for_python_type(python_type_name)
     type_module = python_postgres_module_lookup.get(base_python_type)
     if type_module is not None:

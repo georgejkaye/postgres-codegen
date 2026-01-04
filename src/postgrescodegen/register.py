@@ -16,6 +16,14 @@ from postgrescodegen.generator import (
 tab = "    "
 
 
+def get_make_sequence_function() -> str:
+    lines = [
+        "def make_sequence[T](t : T, info : CompositeInfo) -> Sequence[Any]:",
+        f"{tab}return [getattr(t, name) for name in info.field_names]",
+    ]
+    return "\n".join(lines)
+
+
 def get_register_composite_type_function() -> str:
     lines = [
         "def register_composite_type(",
@@ -25,7 +33,7 @@ def get_register_composite_type_function() -> str:
         ") -> None:",
         f"{tab}info = CompositeInfo.fetch(conn, type_name)",
         f"{tab}if info is not None:",
-        f"{tab * 2}register_composite(info, conn, factory)",
+        f"{tab * 2}register_composite(info, conn, factory, make_sequence=make_sequence)",
         f"{tab}else:",
         f'{tab*2}raise RuntimeError(f"Could not find composite type {{type_name}}")',
     ]
@@ -201,7 +209,7 @@ def get_register_module_code(
 ) -> str:
     psycopg_imports = "\n".join(
         [
-            "from typing import Optional",
+            "from typing import Any, Optional, Sequence",
             "\n",
             "from psycopg import Connection",
             "from psycopg.types import TypeInfo",
@@ -212,6 +220,7 @@ def get_register_module_code(
         python_postgres_module_lookup, postgres_types, postgres_domains
     )
     imports = "\n\n".join([psycopg_imports, type_imports])
+    make_sequence_function = get_make_sequence_function()
     register_composite_type_function = get_register_composite_type_function()
     register_domain_type_function = get_register_domain_type_function()
     register_composite_domain_function = get_register_composite_domain_function()
@@ -221,6 +230,7 @@ def get_register_module_code(
     return "\n\n\n".join(
         [
             imports,
+            make_sequence_function,
             register_composite_type_function,
             register_composite_domain_function,
             register_domain_type_function,

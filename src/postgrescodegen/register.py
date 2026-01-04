@@ -18,7 +18,7 @@ tab = "    "
 
 def get_make_sequence_function() -> str:
     lines = [
-        "def make_sequence[T](t : T, info : CompositeInfo) -> Sequence[Any]:",
+        "def make_sequence(t : object, info : CompositeInfo) -> Sequence[Any]:",
         f"{tab}return [getattr(t, name) for name in info.field_names]",
     ]
     return "\n".join(lines)

@@ -18,7 +18,11 @@ tab = "    "
 
 def get_register_composite_type_function() -> str:
     lines = [
-        "def register_composite_type(conn: Connection, type_name: str, factory: type):",
+        "def register_composite_type(",
+        f"{tab}conn: Connection,",
+        f"{tab}type_name: str,",
+        f"{tab}factory: type",
+        ") -> None:",
         f"{tab}info = CompositeInfo.fetch(conn, type_name)",
         f"{tab}if info is not None:",
         f"{tab * 2}register_composite(info, conn, factory)",
@@ -30,7 +34,12 @@ def get_register_composite_type_function() -> str:
 
 def get_register_composite_domain_function() -> str:
     lines = [
-        "def register_composite_domain_type(conn: Connection, domain_name: str, underlying_type_name: str, factory: type):",
+        "def register_composite_domain_type(",
+        f"{tab}conn: Connection,",
+        f"{tab}domain_name: str,",
+        f"{tab}underlying_type_name: str,",
+        f"{tab}factory: type",
+        ") -> None:",
         f"{tab}domain_info = CompositeInfo.fetch(conn, domain_name)",
         f"{tab}underlying_type_info = CompositeInfo.fetch(conn, underlying_type_name)",
         f"{tab}if domain_info is not None and underlying_type_info is not None:",
@@ -49,7 +58,11 @@ def get_register_composite_domain_function() -> str:
 
 def get_register_domain_type_function() -> str:
     lines = [
-        "def register_domain_type(conn: Connection, domain_name: str, loader: Optional[type]):",
+        "def register_domain_type(",
+        f"{tab}conn: Connection,",
+        f"{tab}domain_name: str,",
+        f"{tab}loader: Optional[type]",
+        ") -> None:",
         f"{tab}info = TypeInfo.fetch(conn, domain_name)",
         f"{tab}if info is not None:",
         f"{tab * 2}info.register(conn)",
@@ -94,7 +107,8 @@ primitive_notnull_domains = [
         "decimal_notnull", PsycopgLoader("NumericLoader", "psycopg.types.numeric")
     ),
     PsycopgDomainDetails(
-        "timestamp_notnull", PsycopgLoader("TimestamptzLoader", "psycopg.types.datetime")
+        "timestamp_notnull",
+        PsycopgLoader("TimestamptzLoader", "psycopg.types.datetime"),
     ),
     PsycopgDomainDetails(
         "interval_notnull", PsycopgLoader("IntervalLoader", "psycopg.types.datetime")

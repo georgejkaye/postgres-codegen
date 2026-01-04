@@ -55,7 +55,7 @@ def get_register_composite_domain_function() -> str:
         f"{tab * 2}domain_info.field_names = underlying_type_info.field_names",
         f"{tab * 2}domain_info.field_types = underlying_type_info.field_types",
         f"{tab * 2}domain_info.array_oid = underlying_type_info.array_oid",
-        f"{tab * 2}register_composite(domain_info, conn, factory)",
+        f"{tab * 2}register_composite(domain_info, conn, factory, make_sequence=make_sequence)",
         f"{tab}elif domain_info is None:",
         f'{tab*2}raise RuntimeError(f"Could not find domain {{domain_name}}")',
         f"{tab}else:",

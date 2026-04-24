@@ -29,10 +29,28 @@ from postgrescodegen.funcgen import (
 )
 from postgrescodegen.generator import get_postgres_module_for_postgres_file
 from postgrescodegen.register import get_register_module_code
-from postgrescodegen.runner import run_in_script_file
+from postgrescodegen.runner import run_in_query, run_in_script_file
 from postgrescodegen.typegen import (
     get_python_postgres_module_for_postgres_type_file,
 )
+
+
+def roll_script_file[T: PostgresObject](
+    db_credentials: DbCredentials,
+    script_file: Path,
+    script_file_module: PythonPostgresModule[T],
+):
+    drop_statements = [
+        module_object.get_drop_statement()
+        for module_object in script_file_module.module_objects
+    ]
+    drop_query = " ".join(drop_statements)
+    run_in_query(
+        db_credentials,
+        drop_query,
+        f"Running drop statements for {script_file}",
+    )
+    run_in_script_file(db_credentials, script_file)
 
 
 def process_script_file[T: PostgresObject](
@@ -51,14 +69,16 @@ def process_script_file[T: PostgresObject](
     tuple[PythonPostgresModuleLookup, PythonPostgresModule[T], Optional[Path]]
 ]:
     try:
-        if roll_scripts and db_credentials is not None:
-            run_in_script_file(db_credentials, script_file)
-        python_postgres_module_lookup, script_file_module = get_script_file_module(
-            postgres_scripts_path,
-            python_output_module,
-            python_postgres_module_lookup,
-            script_file,
+        python_postgres_module_lookup, script_file_module = (
+            get_script_file_module(
+                postgres_scripts_path,
+                python_output_module,
+                python_postgres_module_lookup,
+                script_file,
+            )
         )
+        if roll_scripts and db_credentials is not None:
+            roll_script_file(db_credentials, script_file, script_file_module)
         if len(script_file_module.module_objects) > 0:
             generated_file_path = write_python_file(
                 python_package_path,
@@ -67,7 +87,11 @@ def process_script_file[T: PostgresObject](
             )
         else:
             generated_file_path = None
-        return python_postgres_module_lookup, script_file_module, generated_file_path
+        return (
+            python_postgres_module_lookup,
+            script_file_module,
+            generated_file_path,
+        )
     except Exception as e:
         print(f"Error processing script file {script_file}: {e}")
         return None
@@ -83,7 +107,9 @@ def process_type_script_file(
     script_file: Path,
 ) -> Optional[
     tuple[
-        PythonPostgresModuleLookup, PythonPostgresModule[PostgresType], Optional[Path]
+        PythonPostgresModuleLookup,
+        PythonPostgresModule[PostgresType],
+        Optional[Path],
     ]
 ]:
     print(f"Processing type file {script_file}")
@@ -145,7 +171,10 @@ def process_internal_script_files(
     internal_files = get_db_script_files(resources_path / "sql")
     for file in internal_files:
         if roll_scripts and db_credentials is not None:
-            run_in_script_file(db_credentials, file)
+            roll_script_file(
+                db_credentials,
+                file,
+            )
 
 
 def copy_python_resources(
@@ -176,7 +205,9 @@ def process_register_types_file(
         python_postgres_module_lookup, postgres_types, postgres_domains
     )
     return write_python_file(
-        output_root_path, f"{output_module_name}.types.register", register_type_module
+        output_root_path,
+        f"{output_module_name}.types.register",
+        register_type_module,
     )
 
 
@@ -204,7 +235,9 @@ def process_user_script_files(
         )
         if type_module_result is None:
             continue
-        python_postgres_module_lookup, module, generated_file_path = type_module_result
+        python_postgres_module_lookup, module, generated_file_path = (
+            type_module_result
+        )
         if generated_file_path is not None:
             postgres_types.extend(module.module_objects)
             generated_files.append(generated_file_path)
@@ -256,7 +289,9 @@ def process_all_script_files(
     db_credentials: Optional[DbCredentials],
 ):
     process_internal_script_files(resources_path, roll_scripts, db_credentials)
-    copy_python_resources(resources_path, python_source_root, output_code_module)
+    copy_python_resources(
+        resources_path, python_source_root, output_code_module
+    )
     generated_files = process_user_script_files(
         python_source_root,
         output_code_module,

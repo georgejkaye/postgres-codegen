@@ -1,9 +1,9 @@
 import argparse
 from pathlib import Path
 
-from postgrescodegen.classes import DbCredentials, InputArgs
-from postgrescodegen.processor import process_all_script_files
-from postgrescodegen.watcher import start_watcher
+from postgrescodegen.classes.input import DbCredentials, InputArgs
+from postgrescodegen.process.processor import process_all_script_files
+from postgrescodegen.process.watcher import start_watcher
 
 
 def parse_arguments() -> InputArgs:

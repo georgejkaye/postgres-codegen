@@ -1,15 +1,15 @@
-from postgrescodegen.classes import (
-    PostgresDomain,
-    PostgresType,
+from postgrescodegen.classes.postgres.core import PostgresObject
+from postgrescodegen.classes.postgres.domains import PostgresDomain
+from postgrescodegen.classes.postgres.types import PostgresType
+from postgrescodegen.classes.python import (
     PythonImportDict,
     PythonPostgresModuleLookup,
-    PythonableObject,
-    PythonablePostgresObject,
 )
-from postgrescodegen.generator import (
+from postgrescodegen.generators.core import (
     get_import_statements_for_python_import_dict,
     update_python_type_import_dict,
 )
+
 
 tab = "    "
 
@@ -21,7 +21,7 @@ def get_register_type_function() -> str:
         f"{tab}if info is not None:",
         f"{tab * 2}register_composite(info, conn, factory)",
         f"{tab}else:",
-        f'{tab*2}raise RuntimeError(f"Could not find composite type {{type_name}}")',
+        f'{tab * 2}raise RuntimeError(f"Could not find composite type {{type_name}}")',
     ]
     return "\n".join(lines)
 
@@ -37,9 +37,9 @@ def get_register_domain_function() -> str:
         f"{tab * 2}domain_info.array_oid = underlying_type_info.array_oid",
         f"{tab * 2}register_composite(domain_info, conn, factory)",
         f"{tab}elif domain_info is None:",
-        f'{tab*2}raise RuntimeError(f"Could not find domain {{domain_name}}")',
+        f'{tab * 2}raise RuntimeError(f"Could not find domain {{domain_name}}")',
         f"{tab}else:",
-        f'{tab*2}raise RuntimeError(f"Could not find underlying type {{underlying_type_name}}")',
+        f'{tab * 2}raise RuntimeError(f"Could not find underlying type {{underlying_type_name}}")',
     ]
     return "\n".join(lines)
 
@@ -51,13 +51,13 @@ def get_register_primitive_notnull_domain_function() -> str:
         f"{tab}if info is not None:",
         f"{tab * 2}info.register(conn)",
         f"{tab}else:",
-        f'{tab*2}raise RuntimeError(f"Could not find primitive notnull domain {{domain_name}}")',
+        f'{tab * 2}raise RuntimeError(f"Could not find primitive notnull domain {{domain_name}}")',
     ]
     return "\n".join(lines)
 
 
 def get_register_type_function_call(
-    indent: int, postgres_type: PythonablePostgresObject
+    indent: int, postgres_type: PostgresObject
 ) -> str:
     return f'{tab * indent}register_type(conn, "{postgres_type.get_name()}", {postgres_type.get_python_name()})'
 
@@ -114,12 +114,14 @@ def get_register_types_function_calls(
 
 def update_python_type_import_dict_for_type_name(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
-    python_type: PythonableObject,
+    python_type: PostgresObject,
     import_dict: PythonImportDict,
 ) -> PythonImportDict:
     python_name = python_type.get_python_name()
     module_name = python_postgres_module_lookup[python_name]
-    import_dict = update_python_type_import_dict(import_dict, module_name, python_name)
+    import_dict = update_python_type_import_dict(
+        import_dict, module_name, python_name
+    )
     return import_dict
 
 

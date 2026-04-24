@@ -4,18 +4,14 @@ import shutil
 from pathlib import Path
 from typing import Callable, Optional
 
-from postgrescodegen.classes import (
-    DbCredentials,
-    PostgresDomain,
-    PostgresFunction,
-    PostgresObject,
-    PostgresType,
+from postgrescodegen.classes.input import DbCredentials
+from postgrescodegen.classes.postgres.core import PostgresObject
+from postgrescodegen.classes.postgres.domains import PostgresDomain
+from postgrescodegen.classes.postgres.functions import PostgresFunction
+from postgrescodegen.classes.postgres.types import PostgresType
+from postgrescodegen.classes.python import (
     PythonPostgresModule,
     PythonPostgresModuleLookup,
-)
-from postgrescodegen.domaingen import (
-    get_postgres_domain_for_statement,
-    get_python_code_for_postgres_domain,
 )
 from postgrescodegen.files import (
     clean_output_directory,
@@ -24,25 +20,25 @@ from postgrescodegen.files import (
     get_postgres_files_in_directory,
     write_python_file,
 )
-from postgrescodegen.funcgen import (
+from postgrescodegen.generators.domains import (
+    get_postgres_domains_for_file,
+    get_postgres_module_for_postgres_domain_file,
+)
+from postgrescodegen.generators.functions import (
     get_python_postgres_module_for_postgres_function_file,
 )
-from postgrescodegen.generator import get_postgres_module_for_postgres_file
-from postgrescodegen.register import get_register_module_code
-from postgrescodegen.runner import run_in_query, run_in_script_file
-from postgrescodegen.typegen import (
+from postgrescodegen.generators.register import get_register_module_code
+from postgrescodegen.process.db import run_in_query, run_in_script_file
+from postgrescodegen.generators.types import (
     get_python_postgres_module_for_postgres_type_file,
 )
 
 
 def roll_script_file[T: PostgresObject](
-    db_credentials: DbCredentials,
-    script_file: Path,
-    script_file_module: PythonPostgresModule[T],
+    db_credentials: DbCredentials, script_file: Path, module_objects: list[T]
 ):
     drop_statements = [
-        module_object.get_drop_statement()
-        for module_object in script_file_module.module_objects
+        module_object.get_drop_statement() for module_object in module_objects
     ]
     drop_query = " ".join(drop_statements)
     run_in_query(
@@ -78,7 +74,9 @@ def process_script_file[T: PostgresObject](
             )
         )
         if roll_scripts and db_credentials is not None:
-            roll_script_file(db_credentials, script_file, script_file_module)
+            roll_script_file(
+                db_credentials, script_file, script_file_module.module_objects
+            )
         if len(script_file_module.module_objects) > 0:
             generated_file_path = write_python_file(
                 python_package_path,
@@ -168,13 +166,12 @@ def process_internal_script_files(
     roll_scripts: bool,
     db_credentials: Optional[DbCredentials],
 ):
-    internal_files = get_db_script_files(resources_path / "sql")
-    for file in internal_files:
-        if roll_scripts and db_credentials is not None:
-            roll_script_file(
-                db_credentials,
-                file,
-            )
+    if roll_scripts and db_credentials is not None:
+        if Path(resources_path / "domains").is_dir():
+            internal_domain_files = get_db_script_files(resources_path / "sql")
+            for file in internal_domain_files:
+                domains = get_postgres_domains_for_file(file)
+                roll_script_file(db_credentials, file, domains)
 
 
 def copy_python_resources(
@@ -242,9 +239,7 @@ def process_user_script_files(
             postgres_types.extend(module.module_objects)
             generated_files.append(generated_file_path)
         python_postgres_module_lookup, domain_module_result = (
-            get_postgres_module_for_postgres_file(
-                get_postgres_domain_for_statement,
-                get_python_code_for_postgres_domain,
+            get_postgres_module_for_postgres_domain_file(
                 user_scripts_path,
                 output_code_module,
                 python_postgres_module_lookup,

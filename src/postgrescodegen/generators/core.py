@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Callable, Optional
 
-from postgrescodegen.classes import (
+from postgrescodegen.classes.postgres.core import PostgresObject
+from postgrescodegen.classes.python import (
     PythonImport,
     PythonImportDict,
-    PythonablePostgresObject,
     PythonPostgresModule,
     PythonPostgresModuleLookup,
 )
@@ -37,7 +37,9 @@ def get_import_statement_for_module(module_name: str, tokens: set[str]) -> str:
     return "\n".join(lines)
 
 
-def get_import_statements_for_python_import_dict(import_dict: PythonImportDict) -> str:
+def get_import_statements_for_python_import_dict(
+    import_dict: PythonImportDict,
+) -> str:
     import_statements = [
         get_import_statement_for_module(module, import_dict[module])
         for module in import_dict.keys()
@@ -45,7 +47,9 @@ def get_import_statements_for_python_import_dict(import_dict: PythonImportDict) 
     return "\n".join(import_statements)
 
 
-def get_import_statements_for_python_imports(imports: list[PythonImport]) -> str:
+def get_import_statements_for_python_imports(
+    imports: list[PythonImport],
+) -> str:
     import_dict: dict[str, set[str]] = {}
     for import_token in imports:
         if import_dict.get(import_token.module) is None:
@@ -77,7 +81,20 @@ def get_statements_from_postgres_file(
     return get_statements_from_postgres_file_contents(file_contents, delimiter)
 
 
-def get_postgres_module_for_postgres_file[T: PythonablePostgresObject](
+def get_postgres_objects_for_postgres_file[T: PostgresObject](
+    get_postgres_object_for_statement: Callable[[str], Optional[T]],
+    file_path: Path,
+) -> list[T]:
+    postgres_statements = get_statements_from_postgres_file(file_path)
+    return [
+        postgres_object
+        for statement in postgres_statements
+        if (postgres_object := get_postgres_object_for_statement(statement))
+        is not None
+    ]
+
+
+def get_postgres_module_for_postgres_file[T: PostgresObject](
     get_postgres_object_for_statement: Callable[[str], Optional[T]],
     get_python_code_for_postgres_objects: Callable[
         [PythonPostgresModuleLookup, list[T]], str
@@ -87,12 +104,9 @@ def get_postgres_module_for_postgres_file[T: PythonablePostgresObject](
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     file_path: Path,
 ) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[T]]:
-    postgres_statements = get_statements_from_postgres_file(file_path)
-    postgres_objects = [
-        postgres_object
-        for statement in postgres_statements
-        if (postgres_object := get_postgres_object_for_statement(statement)) is not None
-    ]
+    postgres_objects = get_postgres_objects_for_postgres_file(
+        get_postgres_object_for_statement, file_path
+    )
     python_module_name = get_python_module_name_for_postgres_file(
         postgres_scripts_path,
         file_path,

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import shutil
 
-from postgrescodegen.classes import PostgresFileResult
+from postgrescodegen.classes.postgres.files import PostgresFileResult
 
 
 def get_path_for_module(
@@ -20,7 +20,9 @@ def get_db_script_files(source_dir: Path) -> list[Path]:
         for file in files:
             file_name, extension = os.path.splitext(file)
             if extension == ".sql":
-                code_files.append(Path(os.path.join(root, f"{file_name}{extension}")))
+                code_files.append(
+                    Path(os.path.join(root, f"{file_name}{extension}"))
+                )
     return sorted(code_files)
 
 
@@ -31,7 +33,9 @@ def get_postgres_files_in_directory(code_dir: Path) -> PostgresFileResult:
     return PostgresFileResult(type_files, view_files, function_files)
 
 
-def is_directory_in_generated_files(generated_files: list[Path], dirname: str) -> bool:
+def is_directory_in_generated_files(
+    generated_files: list[Path], dirname: str
+) -> bool:
     for file in generated_files:
         if dirname in str(file):
             return True
@@ -60,7 +64,9 @@ def clean_output_directory(
 def write_python_file(
     output_root_path: Path, module_name: str, file_contents: str
 ) -> Path:
-    relative_module_path = Path(module_name.split(".", maxsplit=1)[1].replace(".", "/"))
+    relative_module_path = Path(
+        module_name.split(".", maxsplit=1)[1].replace(".", "/")
+    )
     output_path = output_root_path / f"{relative_module_path}.py"
     parent_directory = output_path.parent
     parent_directory.mkdir(parents=True, exist_ok=True)

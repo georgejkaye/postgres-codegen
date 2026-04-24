@@ -2,19 +2,21 @@ from pathlib import Path
 import re
 from typing import Optional
 
-from postgrescodegen.classes import (
+from postgrescodegen.classes.postgres.types import (
     PostgresType,
     PostgresTypeField,
+)
+from postgrescodegen.classes.python import (
     PythonImportDict,
     PythonPostgresModule,
     PythonPostgresModuleLookup,
 )
-from postgrescodegen.generator import (
+from postgrescodegen.generators.core import (
     get_import_statements_for_python_import_dict,
     get_postgres_module_for_postgres_file,
     update_python_type_import_dict,
 )
-from postgrescodegen.pgtypes import (
+from postgrescodegen.postgres.primitives import (
     get_base_postgres_type_for_postgres_type,
     is_user_defined_type,
 )
@@ -89,12 +91,16 @@ def get_user_imports_for_postgres_types(
     postgres_types: list[PostgresType],
 ) -> str:
     import_dict: PythonImportDict = {}
-    postgres_type_names = [postgres_type.get_name() for postgres_type in postgres_types]
+    postgres_type_names = [
+        postgres_type.get_name() for postgres_type in postgres_types
+    ]
     for postgres_type in postgres_types:
         for postgres_type_field in postgres_type.type_fields:
             postgres_type_field_type = postgres_type_field.field_type
-            postgres_type_field_base_type = get_base_postgres_type_for_postgres_type(
-                postgres_type_field_type
+            postgres_type_field_base_type = (
+                get_base_postgres_type_for_postgres_type(
+                    postgres_type_field_type
+                )
             )
             if (
                 is_user_defined_type(postgres_type_field_base_type)
@@ -124,16 +130,23 @@ def get_python_code_for_postgres_types(
     postgres_types: list[PostgresType],
 ) -> str:
     python_type_codes = [
-        get_python_for_postgres_type(postgres_type) for postgres_type in postgres_types
+        get_python_for_postgres_type(postgres_type)
+        for postgres_type in postgres_types
     ]
     python_code_str = "\n\n\n".join(python_type_codes)
-    stdlib_python_imports = get_stdlib_imports_for_python_code_str(python_code_str)
+    stdlib_python_imports = get_stdlib_imports_for_python_code_str(
+        python_code_str
+    )
     user_python_imports = get_user_imports_for_postgres_types(
         python_postgres_module_lookup, postgres_types
     )
     return "\n\n".join(
         code_block
-        for code_block in [stdlib_python_imports, user_python_imports, python_code_str]
+        for code_block in [
+            stdlib_python_imports,
+            user_python_imports,
+            python_code_str,
+        ]
         if code_block != ""
     )
 
@@ -144,7 +157,8 @@ def get_postgres_types_for_postgres_statements(
     postgres_types = [
         postgres_type
         for statement in statements
-        if (postgres_type := get_postgres_type_for_statement(statement)) is not None
+        if (postgres_type := get_postgres_type_for_statement(statement))
+        is not None
     ]
     return postgres_types
 

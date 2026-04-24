@@ -16,13 +16,13 @@ from postgrescodegen.generators.core import (
     get_postgres_module_for_postgres_file,
     update_python_type_import_dict,
 )
-from postgrescodegen.postgres.primitives import (
-    get_base_postgres_type_for_postgres_type,
-    is_user_defined_type,
-)
-from postgrescodegen.pytypes import (
+from postgrescodegen.generators.types import (
     get_base_python_type_for_python_type,
     get_python_type_for_postgres_type,
+)
+from postgrescodegen.primitives import (
+    get_base_postgres_type_for_postgres_type,
+    is_user_defined_type,
 )
 
 tab = "    "

@@ -1,9 +1,6 @@
 from dataclasses import dataclass
 
 from postgrescodegen.classes.postgres.core import PostgresObject
-from postgrescodegen.postgres.names import (
-    get_python_name_for_postgres_function_name,
-)
 
 
 @dataclass
@@ -25,4 +22,4 @@ class PostgresFunction(PostgresObject):
         return f"DROP FUNCTION IF EXISTS {self.function_name};"
 
     def get_python_name(self) -> str:
-        return get_python_name_for_postgres_function_name(self.function_name)
+        return self.function_name.lower()

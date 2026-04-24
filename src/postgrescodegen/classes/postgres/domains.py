@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from postgrescodegen.classes.postgres.core import PostgresObject
-from postgrescodegen.postgres.names import (
+from postgrescodegen.classes.postgres.types import (
     get_python_name_for_postgres_type_name,
 )
 

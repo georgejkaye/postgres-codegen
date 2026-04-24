@@ -15,20 +15,9 @@ from postgrescodegen.generators.core import (
 domain_regex = r"CREATE DOMAIN (.*) AS ([A-z_]*) (?:.*)"
 
 
-def get_postgres_domain_for_statement(
-    statement: str,
-) -> Optional[PostgresDomain]:
-    domain_matches = re.match(domain_regex, statement)
-    if domain_matches is None:
-        return None
-    postgres_domain_name = domain_matches.group(1)
-    postgres_underlying_type_name = domain_matches.group(2)
-    return PostgresDomain(postgres_domain_name, postgres_underlying_type_name)
-
-
 def get_postgres_domains_for_file(file_path: Path) -> list[PostgresDomain]:
     return get_postgres_objects_for_postgres_file(
-        get_postgres_domain_for_statement, file_path
+        _get_postgres_domain_for_statement, file_path
     )
 
 
@@ -39,8 +28,8 @@ def get_postgres_module_for_postgres_domain_file(
     file_path: Path,
 ) -> tuple[PythonPostgresModuleLookup, PythonPostgresModule[PostgresDomain]]:
     return get_postgres_module_for_postgres_file(
-        get_postgres_domain_for_statement,
-        get_python_code_for_postgres_domain,
+        _get_postgres_domain_for_statement,
+        _get_python_code_for_postgres_domain,
         postgres_scripts_path,
         python_output_module,
         python_postgres_module_lookup,
@@ -48,8 +37,19 @@ def get_postgres_module_for_postgres_domain_file(
     )
 
 
-def get_python_code_for_postgres_domain(
+def _get_python_code_for_postgres_domain(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     postgres_domains: list[PostgresDomain],
 ) -> str:
     return ""
+
+
+def _get_postgres_domain_for_statement(
+    statement: str,
+) -> Optional[PostgresDomain]:
+    domain_matches = re.match(domain_regex, statement)
+    if domain_matches is None:
+        return None
+    postgres_domain_name = domain_matches.group(1)
+    postgres_underlying_type_name = domain_matches.group(2)
+    return PostgresDomain(postgres_domain_name, postgres_underlying_type_name)

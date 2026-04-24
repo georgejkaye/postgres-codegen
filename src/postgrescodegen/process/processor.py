@@ -8,12 +8,12 @@ from postgrescodegen.classes.input import DbCredentials
 from postgrescodegen.classes.postgres.core import PostgresObject
 from postgrescodegen.classes.postgres.domains import PostgresDomain
 from postgrescodegen.classes.postgres.functions import PostgresFunction
-from postgrescodegen.classes.postgres.types import PostgresType
+from postgrescodegen.classes.postgres.composites import PostgresComposite
 from postgrescodegen.classes.python import (
     PythonPostgresModule,
     PythonPostgresModuleLookup,
 )
-from postgrescodegen.files import (
+from postgrescodegen.process.files import (
     clean_output_directory,
     create_py_typed_files_in_directory,
     get_db_script_files,
@@ -29,8 +29,8 @@ from postgrescodegen.generators.functions import (
 )
 from postgrescodegen.generators.register import get_register_module_code
 from postgrescodegen.process.db import run_in_query, run_in_script_file
-from postgrescodegen.generators.types import (
-    get_python_postgres_module_for_postgres_type_file,
+from postgrescodegen.generators.composites import (
+    get_python_module_for_postgres_composite_file,
 )
 
 
@@ -106,7 +106,7 @@ def process_type_script_file(
 ) -> Optional[
     tuple[
         PythonPostgresModuleLookup,
-        PythonPostgresModule[PostgresType],
+        PythonPostgresModule[PostgresComposite],
         Optional[Path],
     ]
 ]:
@@ -118,7 +118,7 @@ def process_type_script_file(
         roll_scripts,
         db_credentials,
         python_postgres_module_lookup,
-        get_python_postgres_module_for_postgres_type_file,
+        get_python_module_for_postgres_composite_file,
         script_file,
     )
 
@@ -195,7 +195,7 @@ def process_register_types_file(
     output_root_path: Path,
     output_module_name: str,
     python_postgres_module_lookup: PythonPostgresModuleLookup,
-    postgres_types: list[PostgresType],
+    postgres_types: list[PostgresComposite],
     postgres_domains: list[PostgresDomain],
 ) -> Path:
     register_type_module = get_register_module_code(
@@ -218,7 +218,7 @@ def process_user_script_files(
     user_files = get_postgres_files_in_directory(user_scripts_path)
     python_postgres_module_lookup: PythonPostgresModuleLookup = {}
     generated_files: list[Path] = []
-    postgres_types: list[PostgresType] = []
+    postgres_types: list[PostgresComposite] = []
     postgres_domains: list[PostgresDomain] = []
     for file in user_files.type_files:
         type_module_result = process_type_script_file(

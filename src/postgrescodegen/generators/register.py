@@ -1,6 +1,6 @@
 from postgrescodegen.classes.postgres.core import PostgresObject
 from postgrescodegen.classes.postgres.domains import PostgresDomain
-from postgrescodegen.classes.postgres.types import PostgresType
+from postgrescodegen.classes.postgres.composites import PostgresComposite
 from postgrescodegen.classes.python import (
     PythonImportDict,
     PythonPostgresModuleLookup,
@@ -12,9 +12,54 @@ from postgrescodegen.generators.core import (
 
 
 tab = "    "
+notnull_domains = [
+    "TEXT_NOTNULL",
+    "INTEGER_NOTNULL",
+    "BIGINT_NOTNULL",
+    "DECIMAL_NOTNULL",
+    "TIMESTAMP_NOTNULL",
+    "INTERVAL_NOTNULL",
+    "DATERANGE_NOTNULL",
+    "BOOLEAN_NOTNULL",
+]
 
 
-def get_register_type_function() -> str:
+def get_register_module_code(
+    python_postgres_module_lookup: PythonPostgresModuleLookup,
+    postgres_types: list[PostgresComposite],
+    postgres_domains: list[PostgresDomain],
+) -> str:
+    psycopg_imports = "\n".join(
+        [
+            "from psycopg import Connection",
+            "from psycopg.types import TypeInfo",
+            "from psycopg.types.composite import CompositeInfo, register_composite",
+        ]
+    )
+    type_imports = _get_register_types_imports(
+        python_postgres_module_lookup, postgres_types, postgres_domains
+    )
+    imports = "\n\n".join([psycopg_imports, type_imports])
+    register_type_function = _get_register_type_function()
+    register_domain_function = _get_register_domain_function()
+    register_primitive_notnull_domain_function = (
+        _get_register_primitive_notnull_domain_function()
+    )
+    register_all_types_function = _get_register_all_types_function(
+        postgres_types, postgres_domains
+    )
+    return "\n\n\n".join(
+        [
+            imports,
+            register_type_function,
+            register_domain_function,
+            register_primitive_notnull_domain_function,
+            register_all_types_function,
+        ]
+    )
+
+
+def _get_register_type_function() -> str:
     lines = [
         "def register_type(conn: Connection, type_name: str, factory: type):",
         f"{tab}info = CompositeInfo.fetch(conn, type_name)",
@@ -26,7 +71,7 @@ def get_register_type_function() -> str:
     return "\n".join(lines)
 
 
-def get_register_domain_function() -> str:
+def _get_register_domain_function() -> str:
     lines = [
         "def register_domain(conn: Connection, domain_name: str, underlying_type_name: str, factory: type):",
         f"{tab}domain_info = CompositeInfo.fetch(conn, domain_name)",
@@ -44,7 +89,7 @@ def get_register_domain_function() -> str:
     return "\n".join(lines)
 
 
-def get_register_primitive_notnull_domain_function() -> str:
+def _get_register_primitive_notnull_domain_function() -> str:
     lines = [
         "def register_primitive_notnull_domain(conn: Connection, domain_name: str):",
         f"{tab}info = TypeInfo.fetch(conn, domain_name)",
@@ -56,51 +101,41 @@ def get_register_primitive_notnull_domain_function() -> str:
     return "\n".join(lines)
 
 
-def get_register_type_function_call(
+def _get_register_type_function_call(
     indent: int, postgres_type: PostgresObject
 ) -> str:
     return f'{tab * indent}register_type(conn, "{postgres_type.get_name()}", {postgres_type.get_python_name()})'
 
 
-def get_register_domain_function_call(
+def _get_register_domain_function_call(
     indent: int, postgres_domain: PostgresDomain
 ) -> str:
     return f'{tab * indent}register_primitive_notnull_domain(conn, "{postgres_domain.domain_name}")'
 
 
-def get_register_primitive_notnull_domain_function_call(
+def _get_register_primitive_notnull_domain_function_call(
     indent: int, postgres_domain: str
 ) -> str:
     return f'{tab * indent}register_primitive_notnull_domain(conn, "{postgres_domain}")'
 
 
-notnull_domains = [
-    "TEXT_NOTNULL",
-    "INTEGER_NOTNULL",
-    "BIGINT_NOTNULL",
-    "DECIMAL_NOTNULL",
-    "TIMESTAMP_NOTNULL",
-    "INTERVAL_NOTNULL",
-    "DATERANGE_NOTNULL",
-    "BOOLEAN_NOTNULL",
-]
-
-
-def get_register_types_function_calls(
+def _get_register_types_function_calls(
     indent: int,
-    postgres_types: list[PostgresType],
+    postgres_types: list[PostgresComposite],
     postgres_domains: list[PostgresDomain],
 ) -> str:
     python_type_registers = "\n".join(
-        get_register_type_function_call(indent, postgres_type)
+        _get_register_type_function_call(indent, postgres_type)
         for postgres_type in postgres_types
     )
     python_domain_registers = "\n".join(
-        get_register_domain_function_call(indent, postgres_domain)
+        _get_register_domain_function_call(indent, postgres_domain)
         for postgres_domain in postgres_domains
     )
     python_primitive_notnull_domain_registers = "\n".join(
-        get_register_primitive_notnull_domain_function_call(indent, domain_name)
+        _get_register_primitive_notnull_domain_function_call(
+            indent, domain_name
+        )
         for domain_name in notnull_domains
     )
     return "\n\n".join(
@@ -112,7 +147,7 @@ def get_register_types_function_calls(
     )
 
 
-def update_python_type_import_dict_for_type_name(
+def _update_python_type_import_dict_for_type_name(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
     python_type: PostgresObject,
     import_dict: PythonImportDict,
@@ -125,61 +160,26 @@ def update_python_type_import_dict_for_type_name(
     return import_dict
 
 
-def get_register_types_imports(
+def _get_register_types_imports(
     python_postgres_module_lookup: PythonPostgresModuleLookup,
-    postgres_types: list[PostgresType],
+    postgres_types: list[PostgresComposite],
     postgres_domains: list[PostgresDomain],
 ) -> str:
     import_dict: PythonImportDict = {}
     for postgres_type in postgres_types:
-        import_dict = update_python_type_import_dict_for_type_name(
+        import_dict = _update_python_type_import_dict_for_type_name(
             python_postgres_module_lookup, postgres_type, import_dict
         )
     for postgres_domain in postgres_domains:
-        import_dict = update_python_type_import_dict_for_type_name(
+        import_dict = _update_python_type_import_dict_for_type_name(
             python_postgres_module_lookup, postgres_domain, import_dict
         )
     return get_import_statements_for_python_import_dict(import_dict)
 
 
-def get_register_all_types_function(
-    postgres_types: list[PostgresType],
+def _get_register_all_types_function(
+    postgres_types: list[PostgresComposite],
     postgres_domains: list[PostgresDomain],
 ) -> str:
     function_declaration = "def register_types(conn: Connection):"
-    return f"{function_declaration}\n{get_register_types_function_calls(1, postgres_types, postgres_domains)}"
-
-
-def get_register_module_code(
-    python_postgres_module_lookup: PythonPostgresModuleLookup,
-    postgres_types: list[PostgresType],
-    postgres_domains: list[PostgresDomain],
-) -> str:
-    psycopg_imports = "\n".join(
-        [
-            "from psycopg import Connection",
-            "from psycopg.types import TypeInfo",
-            "from psycopg.types.composite import CompositeInfo, register_composite",
-        ]
-    )
-    type_imports = get_register_types_imports(
-        python_postgres_module_lookup, postgres_types, postgres_domains
-    )
-    imports = "\n\n".join([psycopg_imports, type_imports])
-    register_type_function = get_register_type_function()
-    register_domain_function = get_register_domain_function()
-    register_primitive_notnull_domain_function = (
-        get_register_primitive_notnull_domain_function()
-    )
-    register_all_types_function = get_register_all_types_function(
-        postgres_types, postgres_domains
-    )
-    return "\n\n\n".join(
-        [
-            imports,
-            register_type_function,
-            register_domain_function,
-            register_primitive_notnull_domain_function,
-            register_all_types_function,
-        ]
-    )
+    return f"{function_declaration}\n{_get_register_types_function_calls(1, postgres_types, postgres_domains)}"

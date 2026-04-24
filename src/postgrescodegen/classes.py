@@ -34,6 +34,10 @@ class PostgresObject:
     def get_name(self) -> str:
         pass
 
+    @abstractmethod
+    def get_drop_statement(self) -> str:
+        pass
+
 
 class PythonableObject:
     @abstractmethod
@@ -59,6 +63,9 @@ class PostgresType(PythonablePostgresObject):
     def get_name(self) -> str:
         return self.type_name
 
+    def get_drop_statement(self) -> str:
+        return f"DROP TYPE IF EXISTS {self.type_name} CASCADE;"
+
     def get_python_name(self) -> str:
         return get_python_name_for_postgres_type_name(self.type_name)
 
@@ -70,6 +77,9 @@ class PostgresDomain(PythonablePostgresObject):
 
     def get_name(self) -> str:
         return self.domain_name
+
+    def get_drop_statement(self) -> str:
+        return f"DROP DOMAIN IF EXISTS {self.domain_name} CASCADE;"
 
     def get_python_name(self) -> str:
         return get_python_name_for_postgres_type_name(self.underlying_type)
@@ -96,6 +106,9 @@ class PostgresFunction(PythonablePostgresObject):
 
     def get_name(self) -> str:
         return self.function_name
+
+    def get_drop_statement(self) -> str:
+        return f"DROP FUNCTION IF EXISTS {self.function_name};"
 
     def get_python_name(self) -> str:
         return get_python_name_for_postgres_function_name(self.function_name)

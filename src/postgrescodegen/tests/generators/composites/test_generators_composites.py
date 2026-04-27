@@ -8,7 +8,7 @@ test_dir = Path(__file__).parent
 
 
 def test_one():
-    (_, module) = get_python_module_for_postgres_composite_file(
+    (lookup, module) = get_python_module_for_postgres_composite_file(
         test_dir, "db", {}, test_dir / "one.sql"
     )
 
@@ -23,3 +23,8 @@ def test_one():
 
     assert type_a.composite_fields[1].field_name == "field_b"
     assert type_a.composite_fields[1].field_type == "TEXT"
+
+    assert lookup["TestTypeA"] == "db.one"
+
+
+def _create_sql_input

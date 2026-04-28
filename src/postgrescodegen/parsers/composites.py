@@ -1,8 +1,9 @@
-from abc import abstractmethod
 import re
+
+from abc import abstractmethod
 from typing import Optional
 
-from postgrescodegen.generators.parsers.process import PostgresObjectParser
+from postgrescodegen.parsers.parser import PostgresObjectParser
 from postgrescodegen.postgres.composites import (
     PostgresComposite,
     PostgresCompositeField,

@@ -1,31 +1,22 @@
-import re
-from typing import Optional
-
+from postgrescodegen.dumpers.dumper import Dumper
+from postgrescodegen.dumpers.python.types import PythonTypes
 from postgrescodegen.postgres.composites import (
     PostgresComposite,
-    PostgresCompositeField,
 )
 from postgrescodegen.generators.python.python import (
     PythonImportDict,
     PythonPostgresModuleLookup,
-)
-from postgrescodegen.generators.core import (
-    get_base_postgres_type_for_postgres_type,
-    get_base_python_type_for_postgres_type,
-    get_python_type_for_postgres_type,
-    is_user_defined_type,
 )
 from postgrescodegen.generators.python.imports import (
     get_import_statements_for_python_import_dict,
     get_stdlib_imports_for_python_code_str,
     update_python_type_import_dict,
 )
-from postgrescodegen.generators.translators.translator import Translator
 
 tab = "    "
 
 
-class CompositeTranslator(Translator[PostgresComposite]):
+class PythonCompositeDumper(Dumper[PostgresComposite, PythonTypes]):
     def get_python_code_for_postgres_objects(
         self,
         modules: PythonPostgresModuleLookup,

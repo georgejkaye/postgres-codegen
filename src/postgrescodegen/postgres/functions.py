@@ -20,6 +20,3 @@ class PostgresFunction(PostgresObject):
 
     def get_drop_statement(self) -> str:
         return f"DROP FUNCTION IF EXISTS {self.function_name};"
-
-    def get_python_name(self) -> str:
-        return self.function_name.lower()

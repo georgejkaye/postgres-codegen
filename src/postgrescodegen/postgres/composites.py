@@ -1,9 +1,5 @@
 from dataclasses import dataclass
 
-from postgrescodegen.generators.python.core import PythonableObject
-from postgrescodegen.generators.translators.names import (
-    get_python_name_for_postgres_type_name,
-)
 from postgrescodegen.postgres.core import (
     PostgresObject,
 )
@@ -16,7 +12,7 @@ class PostgresCompositeField:
 
 
 @dataclass
-class PostgresComposite(PostgresObject, PythonableObject):
+class PostgresComposite(PostgresObject):
     type_name: str
     composite_fields: list[PostgresCompositeField]
 
@@ -29,6 +25,3 @@ class PostgresComposite(PostgresObject, PythonableObject):
 
     def get_drop_statement(self) -> str:
         return f"DROP TYPE IF EXISTS {self.type_name} CASCADE;"
-
-    def get_python_name(self) -> str:
-        return get_python_name_for_postgres_type_name(self.type_name)

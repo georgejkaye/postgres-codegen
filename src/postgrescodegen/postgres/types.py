@@ -17,24 +17,23 @@ postgres_primitives = set(
 )
 
 
-def get_base_postgres_type_for_postgres_type(postgres_type_name: str) -> str:
-    if _is_postgres_array_type(postgres_type_name):
-        postgres_type_name = postgres_type_name[:-2]
-    if not _is_postgres_type_nullable(postgres_type_name):
-        return postgres_type_name[:-8]
-    return postgres_type_name
+class PostgresTypes:
+    @staticmethod
+    def is_array(type_name: str) -> bool:
+        return type_name[-2:] == "[]"
 
+    @staticmethod
+    def is_nullable(type_name: str) -> bool:
+        return len(type_name) < 8 or type_name[-8:].lower() != "_notnull"
 
-def is_user_defined_type(postgres_type_name: str) -> bool:
-    return (
-        get_base_postgres_type_for_postgres_type(postgres_type_name)
-        not in postgres_primitives
-    )
+    @staticmethod
+    def get_base_type(type_name: str) -> str:
+        if PostgresTypes.is_array(type_name):
+            type_name = type_name[:-2]
+        if not PostgresTypes.is_nullable(type_name):
+            return type_name[:-8]
+        return type_name
 
-
-def _is_postgres_array_type(postgres_type_name: str) -> bool:
-    return postgres_type_name[-2:] == "[]"
-
-
-def _is_postgres_type_nullable(postgres_type: str) -> bool:
-    return len(postgres_type) < 8 or postgres_type[-8:].lower() != "_notnull"
+    @staticmethod
+    def is_composite(type_name: str) -> bool:
+        return PostgresTypes.get_base_type(type_name) not in postgres_primitives

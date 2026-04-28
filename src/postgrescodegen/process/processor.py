@@ -27,7 +27,7 @@ from postgrescodegen.generators.domains import (
 from postgrescodegen.generators.functions import (
     get_python_postgres_module_for_postgres_function_file,
 )
-from postgrescodegen.generators.register import get_register_module_code
+from postgrescodegen.generators.python.register import get_register_module_code
 from postgrescodegen.process.db import run_in_query, run_in_script_file
 from postgrescodegen.generators.composites import (
     get_python_module_for_postgres_composite_file,

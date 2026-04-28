@@ -1,6 +1,8 @@
 import re
 from typing import Optional
 
+from postgrescodegen.dumpers.dumper import Dumper, DumperTypes
+from postgrescodegen.dumpers.python.types import PythonTypes
 from postgrescodegen.postgres.functions import (
     PostgresFunction,
     PostgresFunctionArgument,
@@ -9,39 +11,78 @@ from postgrescodegen.generators.python.python import (
     PythonImportDict,
     PythonPostgresModuleLookup,
 )
-from postgrescodegen.generators.core import (
-    get_base_postgres_type_for_postgres_type,
-    get_base_python_type_for_python_type,
-    get_python_type_for_postgres_type,
-    is_user_defined_type,
-)
 from postgrescodegen.generators.python.imports import (
     get_import_statements_for_python_import_dict,
     update_python_type_import_dict,
 )
-from postgrescodegen.generators.translators.translator import Translator
 
 tab = "    "
-postgres_function_regex = r"CREATE(?: OR REPLACE)? FUNCTION ([A-z_]*)(?: )?\((.*)\).*RETURNS(?: SETOF)? (.*?) LANGUAGE"
 
 
-class FunctionTranslator(Translator[PostgresFunction]):
-    def get_postgres_object_for_statement(
-        self, statement: str
-    ) -> Optional[PostgresFunction]:
-        function_matches = re.match(postgres_function_regex, statement)
-        if function_matches is None:
-            return None
-        function_name = function_matches.group(1)
-        function_args_str = function_matches.group(2)
-        function_return = function_matches.group(3)
-        postgres_function_args = (
-            self._get_postgres_function_args_from_argument_str(
-                function_args_str
+class PythonFunctionDumper[T: DumperTypes](Dumper[PostgresFunction]):
+    def __init__(self, dumper_types: T):
+        self.dumper_types = dumper_types
+
+    @staticmethod
+    def get_code_for_object(postgres_object: PostgresFunction) -> str:
+        python_function_declaration = (
+            PythonFunctionDumper._get_function_declaration(
+                postgres_object, fetchall
             )
         )
-        return PostgresFunction(
-            function_name, function_return, postgres_function_args
+        python_db_inputs = self._get_python_db_inputs(
+            postgres_function.function_args, base_indent=1
+        )
+        python_try = self._get_python_try(base_indent=1)
+        if postgres_function.function_return == "VOID":
+            python_conn_execution = (
+                self._get_python_execution_for_postgres_function(
+                    postgres_function, is_cursor=False, base_indent=2
+                )
+            )
+            python_commit = self._get_python_commit(base_indent=2)
+            python_execution = "\n".join([python_conn_execution, python_commit])
+        else:
+            python_cursor_initialisation = (
+                self._get_python_cursor_initialisation_for_postgres_function(
+                    postgres_function, base_indent=2
+                )
+            )
+            python_cursor_execution = (
+                self._get_python_execution_for_postgres_function(
+                    postgres_function, is_cursor=True, base_indent=3
+                )
+            )
+            if fetchall:
+                python_result_fetching = self._get_python_fetchall(
+                    base_indent=3
+                )
+            else:
+                python_result_fetching = self._get_python_fetchone(
+                    base_indent=3
+                )
+            python_commit = self._get_python_commit(base_indent=3)
+            python_execution = "\n".join(
+                [
+                    python_cursor_initialisation,
+                    python_cursor_execution,
+                    python_commit,
+                    python_result_fetching,
+                ]
+            )
+        python_except = self._get_python_except(base_indent=1)
+        return "\n".join(
+            [
+                line
+                for line in [
+                    python_function_declaration,
+                    python_db_inputs,
+                    python_try,
+                    python_execution,
+                    python_except,
+                ]
+                if line != ""
+            ]
         )
 
     def get_python_code_for_postgres_objects(
@@ -65,27 +106,6 @@ class FunctionTranslator(Translator[PostgresFunction]):
             )
             python_sections.append(fetchone_function)
         return "\n\n\n".join(python_sections)
-
-    def _get_postgres_function_args_from_argument_str(
-        self,
-        argument_str: str,
-    ) -> list[PostgresFunctionArgument]:
-        if argument_str == "":
-            return []
-        function_arg_split = argument_str.split(",")
-        postgres_function_args: list[PostgresFunctionArgument] = []
-        for function_arg in function_arg_split:
-            function_arg_split = function_arg.strip().split(maxsplit=1)
-            function_arg_name = function_arg_split[0]
-            function_arg_type = function_arg_split[1]
-            function_arg_type_without_default = re.split(
-                " DEFAULT", function_arg_type, flags=re.IGNORECASE
-            )[0]
-            postgres_function_arg = PostgresFunctionArgument(
-                function_arg_name, function_arg_type_without_default
-            )
-            postgres_function_args.append(postgres_function_arg)
-        return postgres_function_args
 
     def _get_imports_for_postgres_function_file(
         self,
@@ -144,69 +164,6 @@ class FunctionTranslator(Translator[PostgresFunction]):
             ]
         )
 
-    def _get_python_code_for_postgres_function(
-        self, postgres_function: PostgresFunction, fetchall: bool
-    ) -> str:
-        python_function_declaration = (
-            self._get_python_function_declaration_for_postgres_function(
-                postgres_function, fetchall
-            )
-        )
-        python_db_inputs = self._get_python_db_inputs(
-            postgres_function.function_args, base_indent=1
-        )
-        python_try = self._get_python_try(base_indent=1)
-        if postgres_function.function_return == "VOID":
-            python_conn_execution = (
-                self._get_python_execution_for_postgres_function(
-                    postgres_function, is_cursor=False, base_indent=2
-                )
-            )
-            python_commit = self._get_python_commit(base_indent=2)
-            python_execution = "\n".join([python_conn_execution, python_commit])
-        else:
-            python_cursor_initialisation = (
-                self._get_python_cursor_initialisation_for_postgres_function(
-                    postgres_function, base_indent=2
-                )
-            )
-            python_cursor_execution = (
-                self._get_python_execution_for_postgres_function(
-                    postgres_function, is_cursor=True, base_indent=3
-                )
-            )
-            if fetchall:
-                python_result_fetching = self._get_python_fetchall(
-                    base_indent=3
-                )
-            else:
-                python_result_fetching = self._get_python_fetchone(
-                    base_indent=3
-                )
-            python_commit = self._get_python_commit(base_indent=3)
-            python_execution = "\n".join(
-                [
-                    python_cursor_initialisation,
-                    python_cursor_execution,
-                    python_commit,
-                    python_result_fetching,
-                ]
-            )
-        python_except = self._get_python_except(base_indent=1)
-        return "\n".join(
-            [
-                line
-                for line in [
-                    python_function_declaration,
-                    python_db_inputs,
-                    python_try,
-                    python_execution,
-                    python_except,
-                ]
-                if line != ""
-            ]
-        )
-
     def _get_python_try(self, base_indent: int) -> str:
         return f"{base_indent * tab}try:"
 
@@ -262,13 +219,12 @@ class FunctionTranslator(Translator[PostgresFunction]):
             )
         return python_imports_dict, user_imports_dict
 
-    def _get_python_function_declaration_for_postgres_function(
-        self, postgres_function: PostgresFunction, fetchall: bool
+    @staticmethod
+    def _get_function_declaration(
+        postgres_function: PostgresFunction, fetchall: bool
     ) -> str:
         arguments = [
-            self._get_python_function_argument_for_postgres_function_argument(
-                argument
-            )
+            PythonFunctionDumper._get_function_argument(argument)
             for argument in postgres_function.function_args
         ]
         arguments = ["conn: Connection"] + arguments
@@ -293,7 +249,7 @@ class FunctionTranslator(Translator[PostgresFunction]):
         declaration = f"def {function_name}(\n{tab}{argument_string}\n) -> {return_type_string}:"
         return declaration
 
-    def _get_python_function_argument_for_postgres_function_argument(
+    def _get_function_argument(
         self,
         postgres_function_argument: PostgresFunctionArgument,
     ) -> str:

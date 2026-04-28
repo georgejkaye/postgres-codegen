@@ -1,11 +1,11 @@
-from postgrescodegen.classes.postgres.core import PostgresObject
-from postgrescodegen.classes.postgres.domains import PostgresDomain
-from postgrescodegen.classes.postgres.composites import PostgresComposite
-from postgrescodegen.classes.python import (
+from postgrescodegen.postgres.core import PostgresObject
+from postgrescodegen.postgres.domains import PostgresDomain
+from postgrescodegen.postgres.composites import PostgresComposite
+from postgrescodegen.generators.python.python import (
     PythonImportDict,
     PythonPostgresModuleLookup,
 )
-from postgrescodegen.generators.core import (
+from postgrescodegen.generators.python.imports import (
     get_import_statements_for_python_import_dict,
     update_python_type_import_dict,
 )

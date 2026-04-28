@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 from typing import Mapping, Optional
 
-from postgrescodegen.classes.input import DbCredentials
+from postgrescodegen.input import DbCredentials
 
 
 def run_psql(db_credentials: DbCredentials, args: list[str]):

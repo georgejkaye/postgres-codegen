@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import shutil
 
-from postgrescodegen.classes.postgres.files import PostgresFileResult
+from postgrescodegen.postgres.files import PostgresFileResult
 
 
 def get_path_for_module(

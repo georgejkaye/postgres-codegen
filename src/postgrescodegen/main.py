@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from postgrescodegen.classes.input import DbCredentials, InputArgs
+from postgrescodegen.input import DbCredentials, InputArgs
 from postgrescodegen.process.processor import process_all_script_files
 from postgrescodegen.process.watcher import start_watcher
 

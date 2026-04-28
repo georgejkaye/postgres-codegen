@@ -1,13 +1,16 @@
 from dataclasses import dataclass
 
-from postgrescodegen.classes.postgres.core import (
-    PostgresObject,
+from postgrescodegen.generators.python.core import PythonableObject
+from postgrescodegen.generators.translators.names import (
     get_python_name_for_postgres_type_name,
+)
+from postgrescodegen.postgres.core import (
+    PostgresObject,
 )
 
 
 @dataclass
-class PostgresDomain(PostgresObject):
+class PostgresDomain(PostgresObject, PythonableObject):
     domain_name: str
     underlying_type: str
 

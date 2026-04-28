@@ -1,8 +1,11 @@
 from dataclasses import dataclass
 
-from postgrescodegen.classes.postgres.core import (
-    PostgresObject,
+from postgrescodegen.generators.python.core import PythonableObject
+from postgrescodegen.generators.translators.names import (
     get_python_name_for_postgres_type_name,
+)
+from postgrescodegen.postgres.core import (
+    PostgresObject,
 )
 
 
@@ -13,9 +16,13 @@ class PostgresCompositeField:
 
 
 @dataclass
-class PostgresComposite(PostgresObject):
+class PostgresComposite(PostgresObject, PythonableObject):
     type_name: str
     composite_fields: list[PostgresCompositeField]
+
+    @staticmethod
+    def get_statement_regex() -> str:
+        return r"CREATE TYPE (.*) AS \((.*)\)"
 
     def get_name(self) -> str:
         return self.type_name

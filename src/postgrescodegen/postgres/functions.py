@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from postgrescodegen.classes.postgres.core import PostgresObject
+from postgrescodegen.postgres.core import PostgresObject
 
 
 @dataclass

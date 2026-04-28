@@ -4,12 +4,12 @@ import shutil
 from pathlib import Path
 from typing import Callable, Optional
 
-from postgrescodegen.classes.input import DbCredentials
-from postgrescodegen.classes.postgres.core import PostgresObject
-from postgrescodegen.classes.postgres.domains import PostgresDomain
-from postgrescodegen.classes.postgres.functions import PostgresFunction
-from postgrescodegen.classes.postgres.composites import PostgresComposite
-from postgrescodegen.classes.python import (
+from postgrescodegen.input import DbCredentials
+from postgrescodegen.postgres.core import PostgresObject
+from postgrescodegen.postgres.domains import PostgresDomain
+from postgrescodegen.postgres.functions import PostgresFunction
+from postgrescodegen.postgres.composites import PostgresComposite
+from postgrescodegen.generators.python.python import (
     PythonPostgresModule,
     PythonPostgresModuleLookup,
 )

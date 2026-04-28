@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Optional
-from postgrescodegen.classes.postgres.core import PostgresObject
-from postgrescodegen.classes.python import PythonPostgresModuleLookup
+from postgrescodegen.postgres.core import PostgresObject
+from postgrescodegen.generators.python.python import PythonPostgresModuleLookup
 
 
 class Translator[T: PostgresObject]:

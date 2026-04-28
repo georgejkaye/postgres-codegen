@@ -7,7 +7,7 @@ from typing import Optional
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
-from postgrescodegen.classes.input import DbCredentials
+from postgrescodegen.input import DbCredentials
 from postgrescodegen.process.processor import process_all_script_files
 
 

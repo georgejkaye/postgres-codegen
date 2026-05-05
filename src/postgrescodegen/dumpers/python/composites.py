@@ -1,5 +1,6 @@
 from postgrescodegen.dumpers.dumper import Dumper
 from postgrescodegen.dumpers.python.types import PythonTypes
+from postgrescodegen.generators.python.imports import PythonImports
 from postgrescodegen.postgres.composites import (
     PostgresComposite,
 )
@@ -7,16 +8,12 @@ from postgrescodegen.generators.python.python import (
     PythonImportDict,
     PythonPostgresModuleLookup,
 )
-from postgrescodegen.generators.python.imports import (
-    get_import_statements_for_python_import_dict,
-    get_stdlib_imports_for_python_code_str,
-    update_python_type_import_dict,
-)
+from postgrescodegen.postgres.types import PostgresTypes
 
 tab = "    "
 
 
-class PythonCompositeDumper(Dumper[PostgresComposite, PythonTypes]):
+class PythonCompositeDumper(Dumper[PostgresComposite]):
     def get_python_code_for_postgres_objects(
         self,
         modules: PythonPostgresModuleLookup,
@@ -27,8 +24,10 @@ class PythonCompositeDumper(Dumper[PostgresComposite, PythonTypes]):
             for postgres_composite in postgres_objects
         ]
         python_code_str = "\n\n\n".join(python_composite_functions)
-        stdlib_python_imports = get_stdlib_imports_for_python_code_str(
-            python_code_str
+        stdlib_python_imports = (
+            PythonImports.get_stdlib_imports_for_python_code_str(
+                python_code_str
+            )
         )
         user_python_imports = self._get_user_imports_for_postgres_composites(
             modules, postgres_objects
@@ -47,13 +46,13 @@ class PythonCompositeDumper(Dumper[PostgresComposite, PythonTypes]):
         self,
         postgres_composite: PostgresComposite,
     ) -> str:
-        python_composite_name = postgres_composite.get_python_name()
+        python_composite_name = PythonTypes.get_composite_type_name(
+            postgres_composite.get_name()
+        )
         python_composite_declaration = f"class {python_composite_name}:"
         python_lines = ["@dataclass", python_composite_declaration]
         for type_field in postgres_composite.composite_fields:
-            python_type = get_python_type_for_postgres_type(
-                type_field.field_type
-            )
+            python_type = PythonTypes.from_postgres_type(type_field.field_type)
             python_type_field_str = (
                 f"{tab}{type_field.field_name}: {python_type}"
             )
@@ -75,29 +74,35 @@ class PythonCompositeDumper(Dumper[PostgresComposite, PythonTypes]):
                     postgres_composite_field.field_type
                 )
                 postgres_composite_field_base_type = (
-                    get_base_postgres_type_for_postgres_type(
+                    PythonTypes.get_base_python_type(
                         postgres_composite_field_type
                     )
                 )
                 if (
-                    is_user_defined_type(postgres_composite_field_base_type)
+                    PostgresTypes.is_composite(
+                        postgres_composite_field_base_type
+                    )
                     and postgres_composite_field_base_type
                     not in postgres_composite_names
                 ):
-                    python_type = get_base_python_type_for_postgres_type(
+                    python_type = PostgresTypes.get_base_type(
                         postgres_composite_field_base_type
                     )
                     postgres_composite_field_module = (
                         python_postgres_module_lookup.get(python_type)
                     )
                     if postgres_composite_field_module is not None:
-                        import_dict = update_python_type_import_dict(
-                            import_dict,
-                            postgres_composite_field_module,
-                            python_type,
+                        import_dict = (
+                            PythonImports.update_python_type_import_dict(
+                                import_dict,
+                                postgres_composite_field_module,
+                                python_type,
+                            )
                         )
                     else:
                         print(
                             f"WARNING: Could not find module for {postgres_composite_field_base_type}"
                         )
-        return get_import_statements_for_python_import_dict(import_dict)
+        return PythonImports.get_import_statements_for_python_import_dict(
+            import_dict
+        )

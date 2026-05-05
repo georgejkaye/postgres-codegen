@@ -20,18 +20,8 @@ from postgrescodegen.process.files import (
     get_postgres_files_in_directory,
     write_python_file,
 )
-from postgrescodegen.generators.domains import (
-    get_postgres_domains_for_file,
-    get_postgres_module_for_postgres_domain_file,
-)
-from postgrescodegen.generators.functions import (
-    get_python_postgres_module_for_postgres_function_file,
-)
 from postgrescodegen.generators.python.register import get_register_module_code
 from postgrescodegen.process.db import run_in_query, run_in_script_file
-from postgrescodegen.generators.composites import (
-    get_python_module_for_postgres_composite_file,
-)
 
 
 def roll_script_file[T: PostgresObject](

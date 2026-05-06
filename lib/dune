@@ -1,0 +1,7 @@
+(library
+ (name postgres_codegen)
+ (preprocess
+  (pps ppx_string ppx_deriving.show))
+ (libraries core re))
+
+(include_subdirs qualified)

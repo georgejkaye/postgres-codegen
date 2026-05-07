@@ -2,8 +2,10 @@ type postgres_domain = {
   domain_name : string;
   underlying_type : Types.postgres_type;
 }
+[@@deriving show]
 
-module Function_postgres_object : Object.Postgres_object = struct
+module Postgres_domain :
+  Object_t.Postgres_object_t with type t = postgres_domain = struct
   type t = postgres_domain
 
   let get_name f = f.domain_name

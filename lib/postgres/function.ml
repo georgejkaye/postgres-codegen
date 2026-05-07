@@ -6,7 +6,7 @@ type postgres_function_parameter = {
 
 type postgres_function = {
   function_name : string;
-  function_return : string;
+  function_return : Types.postgres_type;
   function_parameters : postgres_function_parameter list;
 }
 [@@deriving show]

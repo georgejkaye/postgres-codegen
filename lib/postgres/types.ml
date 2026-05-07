@@ -19,6 +19,7 @@ type postgres_type =
   | Composite of string
   | Array of postgres_type
   | Notnull of postgres_type
+  | Setof of postgres_type
 [@@deriving show]
 
 let rec postgres_type_of_string s =
@@ -37,9 +38,12 @@ let rec postgres_type_of_string s =
   | "DATERANGE" -> Primitive Daterange
   | "BOOLEAN" -> Primitive Boolean
   | _ -> (
-      match String.drop_pattern upper_s "_NOTNULL" with
-      | Some s -> Notnull (postgres_type_of_string s)
+      match String.drop_pattern_from_start upper_s "SETOF " with
+      | Some s -> Setof (postgres_type_of_string s)
       | None -> (
-          match String.drop_pattern upper_s "[]" with
-          | Some s -> Array (postgres_type_of_string s)
-          | None -> Composite upper_s))
+          match String.drop_pattern_from_end upper_s "_NOTNULL" with
+          | Some s -> Notnull (postgres_type_of_string s)
+          | None -> (
+              match String.drop_pattern_from_end upper_s "[]" with
+              | Some s -> Array (postgres_type_of_string s)
+              | None -> Composite upper_s)))

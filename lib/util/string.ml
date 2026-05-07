@@ -1,4 +1,6 @@
-let split s pattern =
+include Core.String
+
+let split_on_pattern s pattern =
   match Core.String.substr_index s ~pattern with
   | None -> (s, None)
   | Some i ->
@@ -8,6 +10,11 @@ let split s pattern =
              (i + Core.String.length pattern)
              (Core.String.length s)) )
 
-let split_on_commas = Core.String.split ~on:','
-let split_on_semicolons = Core.String.split ~on:';'
-let split_on_first_space = Core.String.lsplit2 ~on:' '
+let split_on_commas = split ~on:','
+let split_on_semicolons = split ~on:';'
+let split_on_first_space = lsplit2 ~on:' '
+
+let drop_pattern s pattern =
+  match split_on_pattern s pattern with
+  | _, None -> None
+  | first, Some _ -> Some first

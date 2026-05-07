@@ -14,7 +14,12 @@ let split_on_commas = split ~on:','
 let split_on_semicolons = split ~on:';'
 let split_on_first_space = lsplit2 ~on:' '
 
-let drop_pattern s pattern =
+let drop_pattern_from_end s pattern =
   match split_on_pattern s pattern with
   | _, None -> None
   | first, Some _ -> Some first
+
+let drop_pattern_from_start s pattern =
+  match split_on_pattern s pattern with
+  | _, None -> None
+  | _, Some second -> Some second

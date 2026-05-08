@@ -1,4 +1,5 @@
 include Core.String
+open Core
 
 let split_on_pattern s pattern =
   match Core.String.substr_index s ~pattern with
@@ -14,12 +15,15 @@ let split_on_commas = split ~on:','
 let split_on_semicolons = split ~on:';'
 let split_on_first_space = lsplit2 ~on:' '
 
+let starts_with s pattern =
+  match split_on_pattern s pattern with _, None -> false | _, Some _ -> true
+
 let drop_pattern_from_end s pattern =
   match split_on_pattern s pattern with
   | _, None -> None
-  | first, Some _ -> Some first
+  | first, Some second -> if String.length second = 0 then Some first else None
 
 let drop_pattern_from_start s pattern =
   match split_on_pattern s pattern with
   | _, None -> None
-  | _, Some second -> Some second
+  | first, Some second -> if String.length first = 0 then Some second else None

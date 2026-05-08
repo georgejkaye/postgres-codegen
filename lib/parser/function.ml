@@ -5,9 +5,11 @@ open Util
 module Postgres_function_parser : Object.Postgres_object_parser_t = struct
   type t = Postgres.Function.postgres_function
 
+  let get_object_type_name = "function"
+
   let get_statement_regex =
     "CREATE(?: OR REPLACE)? FUNCTION ([A-z_]*)(?: \
-     )?\\((.*)\\).*RETURNS(?:SETOF)? (.*?) LANGUAGE"
+     )?\\((.*)\\).*RETURNS(?:SETOF)? (.*?) LANGUAGE (.*?) AS $$(.*)$$"
 
   let split_parameter_name_and_type parameter_string =
     match parameter_string |> String.strip |> String.split_on_first_space with
@@ -37,12 +39,28 @@ module Postgres_function_parser : Object.Postgres_object_parser_t = struct
     let function_return =
       Re.Group.get m 3 |> Postgres.Types.postgres_type_of_string
     in
+    let function_language_string = Re.Group.get m 4 in
+    let function_language =
+      Postgres.Language.of_string function_language_string
+    in
     match function_parameters with
     | Second message ->
         Second
           [%string "Could not get function: %{Re.Group.get m 0} (%{message})"]
-    | First function_parameters ->
-        First { function_name; function_return; function_parameters }
+    | First function_parameters -> (
+        match function_language with
+        | None ->
+            Second
+              [%string
+                "Could not get function language: %{function_language_string}"]
+        | Some function_language ->
+            First
+              {
+                function_name;
+                function_return;
+                function_parameters;
+                function_language;
+              })
 
   let to_object f = Postgres.Object.Function f
 end

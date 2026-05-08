@@ -3,8 +3,9 @@ open Core
 open Util
 
 module Postgres_composite_parser : Object.Postgres_object_parser_t = struct
-  type t = postgres_composite
+  type t = Postgres.Composite.postgres_composite
 
+  let get_object_type_name = "composite"
   let get_statement_regex = "CREATE(?: OR REPLACE)? TYPE (.*) AS \\((.*)\\)"
 
   let split_field_name_and_type field_string =

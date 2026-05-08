@@ -4,6 +4,7 @@ open Postgres.Domain
 module Postgres_domain_parser : Object.Postgres_object_parser_t = struct
   type t = Postgres.Domain.postgres_domain
 
+  let get_object_type_name = "domain"
   let get_statement_regex = "CREATE DOMAIN (.*) AS ([A-z_]*) (?:.*)"
 
   let of_match m =

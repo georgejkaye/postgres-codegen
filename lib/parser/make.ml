@@ -10,8 +10,7 @@ module type Make_parser_t = sig
     string -> (Postgres.Object.postgres_object, string) Either.t
 end
 
-module Make_parser (P : Object.Postgres_object_parser_t) :
-  Make_parser_t with type t = P.t = struct
+module Make_parser (P : Object.Postgres_object_parser_t) = struct
   type t = P.t
 
   let get_match_for_statement =
@@ -27,6 +26,8 @@ module Make_parser (P : Object.Postgres_object_parser_t) :
 
   let object_of_statement statement =
     match get_match_for_statement statement with
-    | None -> Second "Could not parse"
+    | None ->
+        Second
+          [%string "Could not parse %{P.get_object_type_name}: %{statement}"]
     | Some m -> variant_of_match m
 end

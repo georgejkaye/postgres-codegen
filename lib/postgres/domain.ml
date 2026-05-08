@@ -8,6 +8,7 @@ module Postgres_domain :
   Object_t.Postgres_object_t with type t = postgres_domain = struct
   type t = postgres_domain
 
+  let get_object_type_name = "domain"
   let get_name f = f.domain_name
 
   let get_drop_statement f =

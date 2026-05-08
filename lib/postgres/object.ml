@@ -8,6 +8,8 @@ module Postgres_object :
   Object_t.Postgres_object_t with type t = postgres_object = struct
   type t = postgres_object
 
+  let get_object_type_name = "object"
+
   let get_name = function
     | Composite c -> Composite.Postgres_composite.get_name c
     | Domain d -> Domain.Postgres_domain.get_name d

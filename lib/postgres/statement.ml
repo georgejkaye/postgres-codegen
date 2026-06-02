@@ -9,7 +9,7 @@ type pg_object_type = Type | Function | Domain [@@deriving show]
 type pg_object =
   | Type of string * parameter list
   | Function of
-      string * parameter list * Types.postgres_type * Language.language
+      string * parameter list * Types.postgres_type * Language.language * string
   | Domain of string * string
 [@@deriving show]
 

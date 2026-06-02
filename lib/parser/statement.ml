@@ -14,11 +14,15 @@ let or_replace =
   | _ -> fail "Too many OR REPLACE"
 
 let variable_name =
-  take_while1 (function ' ' | ',' | '(' | ')' | ';' -> false | _ -> true)
+  take_while1 (function
+    | ' ' | ',' | '(' | ')' | ';' | '\n' | '\r' -> false
+    | _ -> true)
   <* ws
 
 let type_name =
-  take_while1 (function '(' | ')' | ',' | ';' -> false | _ -> true)
+  take_while1 (function
+    | '(' | ')' | ',' | ';' | '\n' | '\r' -> false
+    | _ -> true)
   >>= fun t ->
   return (Postgres.Types.postgres_type_of_string (String.strip t)) <* ws
 
@@ -37,15 +41,22 @@ let language =
   | None -> fail "Invalid language"
 
 let _as = string_ci_ws "AS"
+let _function_name = string_ci_ws "FUNCTION" *> variable_name
+let _dollars = string_ci_ws "$$"
+let _dollar_surrounded_body = _dollars *> take_till_string1 "$$"
+let _statement_body = take_till_char ';'
+
+let _function_body =
+  peek_char_fail >>= function
+  | '$' -> _dollar_surrounded_body
+  | _ -> _statement_body
 
 let _function =
-  (string_ci_ws "FUNCTION" *> variable_name)
-  ^^ bracketed_params
-  ^^ returns
-  ^^ language
-  <* _as
-  >>= fun (function_name, (parameters, (return_type, lang))) ->
-  return (Create (Function (function_name, parameters, return_type, lang)))
+  (_function_name ^^ bracketed_params ^^ returns ^^ language <* _as)
+  ^^ _function_body
+  >>= fun ((function_name, (parameters, (return_type, lang))), body) ->
+  return
+    (Create (Function (function_name, parameters, return_type, lang, body)))
 
 let _type = string_ci_ws "TYPE" *> return (Create (Type ("hello", [])))
 
@@ -66,7 +77,9 @@ let dollars = string_ci_ws "$$"
 let sc = char_ws ';'
 
 let statement =
-  ws *> peek_char_fail >>= function
-  | 'C' -> create_or_replace *> create_body
-  | 'D' -> drop
-  | _ -> fail "Not supported"
+  ws *> peek_char_fail
+  >>= (function
+        | 'C' -> create_or_replace *> create_body
+        | 'D' -> drop
+        | _ -> fail "Not supported")
+  <* sc

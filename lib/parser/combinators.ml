@@ -1,7 +1,7 @@
 open Angstrom
 open Util
 
-let take_until_strings' ~allow_empty strings =
+let take_till_strings' ~distinct ~allow_empty strings =
   let sorted_strings =
     List.sort strings ~compare:(fun a b ->
         Int.compare (String.length a) (String.length b))
@@ -10,14 +10,27 @@ let take_until_strings' ~allow_empty strings =
     (let rec try_strings = function
        | [] -> fail "try next char"
        | current_string :: rest ->
-           let len = String.length current_string in
-           peek_string len
-           >>= (fun str ->
-                 if String.is_prefix str ~prefix:current_string then
-                   return (String.of_char_list (List.rev acc))
-                   <* string current_string
-                 else try_strings rest)
-           <|> try_strings rest
+           let peek_string =
+             let len = String.length current_string in
+             peek_string len
+             >>= (fun str ->
+                   if String.is_prefix str ~prefix:current_string then
+                     return (String.of_char_list (List.rev acc))
+                     <* string current_string
+                   else try_strings rest)
+             <|> try_strings rest
+           in
+           let peek_distinct =
+             peek_string >>= fun s ->
+             match String.to_list_rev s with
+             | [] -> if allow_empty then return s else fail "only empty found"
+             | c :: cs -> (
+                 match c with
+                 | ' ' | '\r' | '\n' ->
+                     return (String.of_char_list (List.rev cs))
+                 | _ -> fail "Not distinct match")
+           in
+           if distinct then peek_distinct else peek_string
      in
      try_strings sorted_strings)
     <|> (any_char >>= fun c -> go (c :: acc))
@@ -27,24 +40,18 @@ let take_until_strings' ~allow_empty strings =
   | 0 when not allow_empty -> fail "Only empty found"
   | _ -> return x
 
-let take_until_string' s = take_until_strings' [ s ]
-
-let take_until_distinct_strings' ss =
-  take_until_strings' (List.map ~f:(fun x -> " " ^ x) ss)
-
-let take_until_distinct_string' s = take_until_distinct_strings' [ s ]
-let take_until_string = take_until_string' ~allow_empty:false
-let take_until_string1 = take_until_string' ~allow_empty:true
-let take_until_strings = take_until_strings' ~allow_empty:false
-let take_until_strings1 = take_until_strings' ~allow_empty:true
-let take_until_distinct_string = take_until_distinct_string' ~allow_empty:false
-let take_until_distinct_string1 = take_until_distinct_string' ~allow_empty:true
-
-let take_until_distinct_strings =
-  take_until_distinct_strings' ~allow_empty:false
-
-let take_until_distinct_strings1 =
-  take_until_distinct_strings' ~allow_empty:true
+let take_till_string' s = take_till_strings' [ s ]
+let take_till_distinct_strings' = take_till_strings' ~distinct:true
+let take_till_distinct_string' s = take_till_distinct_strings' [ s ]
+let take_till_string = take_till_string' ~distinct:false ~allow_empty:true
+let take_till_string1 = take_till_string' ~distinct:false ~allow_empty:false
+let take_till_strings = take_till_strings' ~distinct:false ~allow_empty:true
+let take_till_strings1 = take_till_strings' ~distinct:false ~allow_empty:false
+let take_till_distinct_string = take_till_distinct_string' ~allow_empty:false
+let take_till_distinct_string1 = take_till_distinct_string' ~allow_empty:true
+let take_till_distinct_strings = take_till_distinct_strings' ~allow_empty:false
+let take_till_distinct_strings1 = take_till_distinct_strings' ~allow_empty:true
+let take_till_char c = take_till (Char.equal c)
 
 let ws =
   skip_while (function

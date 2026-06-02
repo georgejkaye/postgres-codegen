@@ -5,7 +5,7 @@ let split_on_pattern s pattern =
   match Core.String.substr_index s ~pattern with
   | None -> (s, None)
   | Some i ->
-      ( Core.String.slice s 0 i,
+      ( (match i with 0 -> "" | _ -> Core.String.slice s 0 i),
         Some
           (Core.String.slice s
              (i + Core.String.length pattern)

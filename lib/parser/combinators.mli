@@ -13,3 +13,4 @@ val ws : unit t
 val char_ws : char -> char t
 val string_ci_ws : string -> string t
 val ( ^^ ) : 'a t -> 'b t -> ('a * 'b) t
+val ( <?> ) : 'a t -> string -> 'a t

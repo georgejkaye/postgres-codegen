@@ -2,21 +2,17 @@ type postgres_object =
   | Composite of Composite.postgres_composite
   | Domain of Domain.postgres_domain
   | Function of Function.postgres_function
+  | View of View.postgres_view
 [@@deriving show]
 
-module Postgres_object :
-  Object_t.Postgres_object_t with type t = postgres_object = struct
-  type t = postgres_object
+let get_name = function
+  | Composite c -> c.composite_name
+  | Domain d -> d.domain_name
+  | Function f -> f.function_name
+  | View v -> v.view_name
 
-  let get_object_type_name = "object"
-
-  let get_name = function
-    | Composite c -> Composite.Postgres_composite.get_name c
-    | Domain d -> Domain.Postgres_domain.get_name d
-    | Function f -> Function.Postgres_function.get_name f
-
-  let get_drop_statement = function
-    | Composite c -> Composite.Postgres_composite.get_drop_statement c
-    | Domain d -> Domain.Postgres_domain.get_drop_statement d
-    | Function f -> Function.Postgres_function.get_drop_statement f
-end
+let get_drop_statement = function
+  | Composite c -> [%string "DROP TYPE IF EXISTS %{c.composite_name} CASCADE;"]
+  | Domain d -> [%string "DROP DOMAIN IF EXISTS %{d.domain_name} CASCADE;"]
+  | Function f -> [%string "DROP FUNCTION IF EXISTS %{f.function_name}"]
+  | View v -> [%string "DROP VIEW IF EXISTS %{v.view_name}"]

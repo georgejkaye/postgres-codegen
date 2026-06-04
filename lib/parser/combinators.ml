@@ -65,3 +65,8 @@ let take_till_distinct_string1 = take_till_distinct_string' ~allow_empty:false
 let take_till_distinct_strings = take_till_distinct_strings' ~allow_empty:true
 let take_till_distinct_strings1 = take_till_distinct_strings' ~allow_empty:false
 let take_till_char c = take_till (Char.equal c)
+
+let at_most_one p =
+  many p >>= fun rs ->
+  let n = List.length rs in
+  match n with 0 | 1 -> return (n, rs) | _ -> fail "Too many"

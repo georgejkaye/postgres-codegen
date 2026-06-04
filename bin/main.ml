@@ -7,20 +7,20 @@ let param =
   anon ("filename" %: string)
 
 let read_file = File.Wrapper.Base_file_wrapper.read_file
-let get_postgres_objects = Parser.Process.get_postgres_objects_for_file_contents
-
-let print_objects =
-  List.iter ~f:(Show.show_line Postgres.Object.show_postgres_object)
-
+let get_postgres_objects = Parser.Process.parse_file_contents
+let print_statement = Show.show_line Postgres.Statement.show_statement
 let print_message = Show.show_line (fun x -> x)
 
 let print_error_or_result = function
   | Second msg -> print_message msg
-  | First objects -> print_objects objects
+  | First objects -> List.iter ~f:print_statement objects
 
 let get_objects = function
   | Second msg -> Second msg
-  | First contents -> First (get_postgres_objects contents)
+  | First contents -> (
+      match get_postgres_objects contents with
+      | Ok vs -> First vs
+      | Error msg -> Second msg)
 
 let command =
   Command.basic ~summary:"Generate code for interacting with postgres objects"

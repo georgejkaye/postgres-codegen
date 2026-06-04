@@ -1,5 +1,6 @@
 open Angstrom
 open Postgres.Statement
+open Postgres
 open Util
 open Combinators
 
@@ -7,11 +8,25 @@ let function_header_keywords = [ "LANGUAGE"; "RETURNS"; "AS" ]
 let lb = char_ws '('
 let rb = char_ws ')'
 let comma = char_ws ','
-let dollars = string_ci_ws "$$"
+let double_dollars = string_ci_ws "$$" <?> "expected $$"
 let sc = char_ws ';'
+let keyword kw = string_ci_ws kw <?> "expected keyword " ^ kw
+let as_keyword = keyword "AS"
+let function_keyword = keyword "FUNCTION"
+let returns_keyword = keyword "RETURNS"
+let language_keyword = keyword "LANGUAGE"
+let drop_keyword = keyword "DROP"
+let create_keyword = keyword "CREATE"
+let or_keyword = keyword "OR"
+let replace_keyword = keyword "REPLACE"
+let if_keyword = keyword "IF"
+let exists_keyword = keyword "EXISTS"
+let domain_keyword = keyword "DOMAIN"
+let view_keyword = keyword "VIEW"
+let type_keyword = keyword "TYPE"
 
 let or_replace =
-  many (string_ci_ws "OR" *> string_ci_ws "REPLACE" *> return ())
+  many (or_keyword *> replace_keyword *> return ())
   >>= (fun rs ->
         match List.length rs with
         | 0 | 1 -> return ()
@@ -41,20 +56,13 @@ let param_and_type =
 let bracketed_params =
   lb *> sep_by comma param_and_type <* ws <* rb <?> "bracketed_params"
 
-let language =
+let language_name =
   variable_name
   >>= (fun id ->
         match Postgres.Language.of_string id with
         | Some l -> return l
         | None -> fail ("Invalid language " ^ id))
   <?> "language"
-
-let keyword kw = string_ci_ws kw <?> "expected keyword " ^ kw
-let as_keyword = keyword "AS"
-let function_keyword = keyword "FUNCTION"
-let returns_keyword = keyword "RETURNS"
-let language_keyword = keyword "LANGUAGE"
-let double_dollars = string_ci_ws "$$" <?> "expected $$"
 
 let dollar_surrounded_body =
   double_dollars *> take_till_string1 "$$"
@@ -81,7 +89,7 @@ let function_statement =
    and+ _ = returns_keyword
    and+ return_type = function_return_type
    and+ _ = language_keyword
-   and+ lang = language
+   and+ lang = language_name
    and+ _ = as_keyword
    and+ body = function_body in
    Create (Function (function_name, parameters, return_type, lang, body)))
@@ -92,8 +100,7 @@ let type_statement = string_ci_ws "TYPE" *> return (Create (Type ("hello", [])))
 let domain_statement =
   string_ci_ws "DOMAIN" *> return (Create (Domain ("hello", "Hello")))
 
-let create_or_replace =
-  string_ci_ws "CREATE" *> or_replace <?> "create_or_replace"
+let create_or_replace = create_keyword *> or_replace <?> "create_or_replace"
 
 let create_body =
   peek_char_fail
@@ -104,7 +111,19 @@ let create_body =
         | _ -> fail "Invalid create")
   <?> "create_body"
 
-let drop = string_ci_ws "DROP" *> return (Drop (Function, "Hello"))
+let if_exists = at_most_one (if_keyword *> exists_keyword *> return ())
+
+let object_type =
+  peek_char_fail >>= function
+  | 'F' -> function_keyword *> return Object_type.Function
+  | 'T' -> type_keyword *> return Object_type.Composite
+  | 'D' -> domain_keyword *> return Object_type.Function
+  | 'V' -> view_keyword *> return Object_type.View
+  | _ -> fail "unsupported drop" <?> "drop"
+
+let drop =
+  drop_keyword *> object_type >>= fun ot ->
+  if_exists *> variable_name >>= fun id -> return (Drop (ot, id))
 
 let statement =
   ws *> peek_char_fail

@@ -14,5 +14,5 @@ let get_name = function
 let get_drop_statement = function
   | Composite c -> [%string "DROP TYPE IF EXISTS %{c.composite_name} CASCADE;"]
   | Domain d -> [%string "DROP DOMAIN IF EXISTS %{d.domain_name} CASCADE;"]
-  | Function f -> [%string "DROP FUNCTION IF EXISTS %{f.function_name}"]
-  | View v -> [%string "DROP VIEW IF EXISTS %{v.view_name}"]
+  | Function f -> [%string "DROP FUNCTION IF EXISTS %{f.function_name};"]
+  | View v -> [%string "DROP VIEW IF EXISTS %{v.view_name};"]

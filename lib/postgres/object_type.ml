@@ -1,1 +1,2 @@
-type pg_object_type = Composite | Function | Domain | View [@@deriving show]
+type postgres_object_type = Composite | Function | Domain | View
+[@@deriving show]

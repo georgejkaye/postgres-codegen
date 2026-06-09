@@ -2,6 +2,6 @@
  (name postgres_codegen)
  (preprocess
   (pps ppx_string ppx_deriving.show))
- (libraries core core_unix.sys_unix re angstrom))
+ (libraries core core_unix.sys_unix re angstrom fpath))
 
 (include_subdirs qualified)

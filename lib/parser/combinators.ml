@@ -6,8 +6,8 @@ let ws =
     | '\x20' | '\x0a' | '\x0d' | '\x09' | '\x85' -> true
     | _ -> false)
 
-let char_ws c = char c <* ws
-let string_ci_ws s = string_ci s <* ws
+let char_p c p = char c <* p
+let string_ci_p s p = string_ci s <* p
 let ( ^^ ) = both
 
 let ( <?> ) p l =

@@ -4,13 +4,24 @@ open Postgres
 open Util
 open Combinators
 
+let ws_or_comment =
+  ws *> peek_char >>= function
+  | Some '-' -> (
+      char '-' *> peek_char >>= function
+      | Some '-' ->
+          skip_while (function '\n' -> false | _ -> true)
+          *> char '\n'
+          *> return ()
+      | _ -> return ())
+  | _ -> return ()
+
 let function_header_keywords = [ "LANGUAGE"; "RETURNS"; "AS" ]
-let lb = char_ws '('
-let rb = char_ws ')'
-let comma = char_ws ','
-let double_dollars = string_ci_ws "$$" <?> "expected $$"
-let sc = char_ws ';'
-let keyword kw = string_ci_ws kw <?> "expected keyword " ^ kw
+let lb = char_p '(' ws_or_comment
+let rb = char_p ')' ws_or_comment
+let comma = char_p ',' ws_or_comment
+let double_dollars = string_ci_p "$$" ws_or_comment <?> "expected $$"
+let sc = char_p ';' ws_or_comment
+let keyword kw = string_ci_p kw ws_or_comment <?> "expected keyword " ^ kw
 let as_keyword = keyword "AS"
 let cascade_keyword = keyword "CASCADE"
 let create_keyword = keyword "CREATE"
@@ -25,6 +36,7 @@ let replace_keyword = keyword "REPLACE"
 let returns_keyword = keyword "RETURNS"
 let type_keyword = keyword "TYPE"
 let view_keyword = keyword "VIEW"
+let comment = string "--" *> take_till_char '\n' *> return ()
 
 let or_replace =
   many (or_keyword *> replace_keyword *> return ())
@@ -38,13 +50,13 @@ let variable_name =
   take_while1 (function
     | ' ' | ',' | '(' | ')' | ';' | '\n' | '\r' -> false
     | _ -> true)
-  <* ws
+  <* ws_or_comment
   <?> "variable_name"
 
 let parameter_type =
   take_while1 (function ')' | ',' -> false | _ -> true) >>= fun t ->
   return (Postgres.Types.postgres_type_of_string (String.strip t))
-  <* ws
+  <* ws_or_comment
   <?> "type_name"
 
 let param_and_type =
@@ -53,7 +65,10 @@ let param_and_type =
   return { parameter_name; parameter_type } <?> "param_and_type"
 
 let bracketed_params =
-  lb *> sep_by comma param_and_type <* ws <* rb <?> "bracketed_params"
+  lb *> sep_by comma param_and_type
+  <* ws_or_comment
+  <* rb
+  <?> "bracketed_params"
 
 let language_name =
   variable_name
@@ -78,7 +93,8 @@ let function_body =
 let function_return_type =
   take_till_distinct_strings1 function_header_keywords
   >>= (fun t ->
-        return (Postgres.Types.postgres_type_of_string (String.strip t)) <* ws)
+        return (Postgres.Types.postgres_type_of_string (String.strip t))
+        <* ws_or_comment)
   <?> "function_return_type"
 
 let function_statement =
@@ -154,7 +170,7 @@ let drop =
   return (Drop { object_type; object_name; cascade = i == 1 })
 
 let statement =
-  ws *> peek_char_fail
+  ws_or_comment *> peek_char_fail
   >>= (function 'C' -> create | 'D' -> drop | _ -> fail "Not supported")
   <* sc
   <?> "statement"

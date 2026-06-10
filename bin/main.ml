@@ -3,11 +3,11 @@ open Core
 
 let params =
   let open Command.Param in
-  both (anon ("filename" %: string)) (anon ("base" %: string))
+  anon ("base" %: string)
 
-module Parser = Parser.Process.Process (File.Wrapper.Base_file_wrapper)
+module Parser = Process.Process (File.Wrapper.Base_file_wrapper)
 
-let get_postgres_objects = Parser.postgres_module_of_file
+let get_postgres_objects = Parser.postgres_modules_of_folder
 let print_message = Util.Show.show_line (fun x -> x)
 
 let print_error_or_result = function
@@ -21,13 +21,12 @@ let print_error_or_result = function
 let command =
   Command.basic ~summary:"Generate code for interacting with postgres objects"
     ~readme:(fun () -> "Todo")
-    (Command.Param.map params ~f:(fun (file_path, base_path) () ->
-         let file_path = Util.File.of_string file_path in
+    (Command.Param.map params ~f:(fun base_path () ->
          let base_path = Util.File.of_string base_path in
-         match (file_path, base_path) with
-         | First file_path, First base_path ->
-             get_postgres_objects ~file_path ~base_path |> print_error_or_result
-         | Second _, _ -> print_message "Could not parse file path"
-         | _, Second _ -> failwith "Could not parse base path"))
+         match base_path with
+         | First base_path ->
+             get_postgres_objects ~base_path
+             |> List.iter ~f:print_error_or_result
+         | Second _ -> failwith "Could not parse base path"))
 
 let () = Command_unix.run ~version:"1.0" ~build_info:"RWO" command

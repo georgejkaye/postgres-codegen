@@ -1,1 +1,2 @@
-type postgres_view = { view_name : string } [@@deriving show]
+type postgres_view = { view_name : string; view_body : string }
+[@@deriving show]

@@ -12,7 +12,14 @@ end = struct
   let module_name_of_file_path ~file_path ~base_path =
     match Fpath.relativize ~root:base_path file_path with
     | None -> None
-    | Some relative_path -> Some (Fpath.segs relative_path)
+    | Some relative_path -> (
+        let segments = Fpath.segs relative_path in
+        match List.rev segments with
+        | [] -> None
+        | x :: xs -> (
+            match String.lsplit2 ~on:'.' x with
+            | Some (name, _) -> Some (List.rev (name :: xs))
+            | None -> Some segments))
 
   let postgres_module_of_file ~file_path ~base_path =
     match module_name_of_file_path ~file_path ~base_path with
@@ -26,13 +33,7 @@ end = struct
             let open Postgres.Module in
             match Parser.Process.parse_statements contents with
             | Ok statements ->
-                let statements =
-                  List.fold statements
-                    ~f:(fun acc cur ->
-                      match cur with Some s -> s :: acc | None -> acc)
-                    ~init:[]
-                  |> List.rev
-                in
+                let statements = Util.List.filter_somes statements in
                 First { module_name; statements }
             | Error msg ->
                 Second [%string "ERROR: %{Fpath.to_string file_path}: %{msg}"]))

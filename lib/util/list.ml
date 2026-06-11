@@ -14,5 +14,10 @@ let map_with_fail xs ~message ~f =
 
 let filter_seconds =
   List.fold_right
-    ~f:(fun cur acc -> match cur with Second _ -> acc | First f -> f :: acc)
+    ~f:(fun cur acc -> match cur with Second _ -> acc | First x -> x :: acc)
+    ~init:[]
+
+let filter_somes =
+  List.fold_right
+    ~f:(fun cur acc -> match cur with None -> acc | Some x -> x :: acc)
     ~init:[]

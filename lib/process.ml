@@ -25,7 +25,15 @@ end = struct
         | First contents -> (
             let open Postgres.Module in
             match Parser.Process.parse_statements contents with
-            | Ok statements -> First { module_name; statements }
+            | Ok statements ->
+                let statements =
+                  List.fold statements
+                    ~f:(fun acc cur ->
+                      match cur with Some s -> s :: acc | None -> acc)
+                    ~init:[]
+                  |> List.rev
+                in
+                First { module_name; statements }
             | Error msg ->
                 Second [%string "ERROR: %{Fpath.to_string file_path}: %{msg}"]))
 

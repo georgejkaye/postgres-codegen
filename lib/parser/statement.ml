@@ -5,15 +5,20 @@ open Util
 open Combinators
 
 let ws_or_comment =
-  ws *> peek_char >>= function
-  | Some '-' -> (
-      char '-' *> peek_char >>= function
-      | Some '-' ->
-          skip_while (function '\n' -> false | _ -> true)
-          *> char '\n'
-          *> return ()
-      | _ -> return ())
-  | _ -> return ()
+  let rec go () =
+    ws *> peek_char >>= function
+    | Some '-' -> (
+        char '-' *> peek_char >>= function
+        | Some '-' -> (
+            skip_while (function '\n' -> false | _ -> true) *> peek_char
+            >>= function
+            | None -> return ()
+            | Some '\n' -> char '\n' *> go ()
+            | _ -> fail "blah" *> go ())
+        | _ -> return ())
+    | _ -> return ()
+  in
+  go ()
 
 let function_header_keywords = [ "LANGUAGE"; "RETURNS"; "AS" ]
 let lb = char_p '(' ws_or_comment
@@ -106,22 +111,23 @@ let function_statement =
    and+ function_language = language_name
    and+ _ = as_keyword
    and+ function_body = function_body in
-   Create
-     (Function
-        {
-          function_name;
-          function_parameters;
-          function_return;
-          function_language;
-          function_body;
-        }))
+   Some
+     (Create
+        (Function
+           {
+             function_name;
+             function_parameters;
+             function_return;
+             function_language;
+             function_body;
+           })))
   <?> "function_statement"
 
 let type_statement =
   let+ composite_name = variable_name
   and+ _ = as_keyword
   and+ composite_fields = bracketed_params in
-  Create (Composite { composite_name; composite_fields })
+  Some (Create (Composite { composite_name; composite_fields }))
 
 let domain_constraint =
   take_till_char ';' >>= function
@@ -140,9 +146,15 @@ let domain_statement =
   and+ _ = as_keyword
   and+ underlying_type = domain_type
   and+ domain_constraint = domain_constraint in
-  Create (Domain { domain_name; underlying_type; domain_constraint })
+  Some (Create (Domain { domain_name; underlying_type; domain_constraint }))
 
-let view_statement = fail "todo"
+let view_body = take_till_char ';'
+
+let view_statement =
+  let+ view_name = variable_name
+  and+ _ = as_keyword
+  and+ view_body = view_body in
+  Some (Create (View { view_name; view_body }))
 
 let object_type =
   peek_char_fail >>= function
@@ -167,11 +179,11 @@ let drop =
   drop_keyword *> object_type >>= fun object_type ->
   (if_exists *> variable_name) ^^ at_most_one cascade_keyword
   >>= fun (object_name, (i, _)) ->
-  return (Drop { object_type; object_name; cascade = i == 1 })
+  return (Some (Drop { object_type; object_name; cascade = i == 1 }))
 
 let statement =
   ws_or_comment *> peek_char_fail
-  >>= (function 'C' -> create | 'D' -> drop | _ -> fail "Not supported")
+  >>= (function 'C' -> create | 'D' -> drop | _ -> return None)
   <* sc
   <?> "statement"
 

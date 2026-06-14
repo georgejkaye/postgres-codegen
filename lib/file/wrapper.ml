@@ -1,7 +1,10 @@
 open Core
 
-module Base_file_wrapper : Wrapper_t.File_wrapper_t = struct
-  let read_file path =
+module System_file_wrapper : Wrapper_t.File_wrapper_t = struct
+  type t_read = unit
+  type t_write = unit
+
+  let read_file _ path =
     match Util.File.file_exists path with
     | `No -> Second [%string "File %{Fpath.to_string path} does not exist"]
     | `Unknown ->
@@ -13,7 +16,7 @@ module Base_file_wrapper : Wrapper_t.File_wrapper_t = struct
              ~f:(fun file -> In_channel.input_all file)
              path)
 
-  let write_file path s =
+  let write_file _ path s =
     Util.File.with_out_file path ~binary:false ~f:(fun file ->
         Out_channel.output_string file s)
 end

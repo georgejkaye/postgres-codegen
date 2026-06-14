@@ -12,14 +12,19 @@ end = struct
   let module_name_of_file_path ~file_path ~base_path =
     match Fpath.relativize ~root:base_path file_path with
     | None -> None
-    | Some relative_path -> (
-        let segments = Fpath.segs relative_path in
-        match List.rev segments with
-        | [] -> None
-        | x :: xs -> (
-            match String.lsplit2 ~on:'.' x with
-            | Some (name, _) -> Some (List.rev (name :: xs))
-            | None -> Some segments))
+    | Some relative_path ->
+        let parent, base = Fpath.split_base relative_path in
+        let base_without_extension = Fpath.rem_ext base in
+        let base_string = Fpath.to_string base_without_extension in
+        let renamed_base =
+          match String.lsplit2 base_string ~on:'_' with
+          | None -> base_string
+          | Some (prefix, suffix) -> (
+              match Int.of_string_opt prefix with
+              | None -> base_string
+              | Some _ -> suffix)
+        in
+        Some (Fpath.segs (Fpath.add_seg parent renamed_base))
 
   let postgres_module_of_file ~file_path ~base_path =
     match module_name_of_file_path ~file_path ~base_path with

@@ -11,7 +11,7 @@ let with_in_file path ?(binary = false) =
 
 let of_string path_string =
   match Fpath.of_string path_string with
-  | Error msg -> Second msg
+  | Error (`Msg msg) -> Second msg
   | Ok a -> First a
 
 let rec get_files_in_directory ?(filter = fun _ -> true) ?(recurse = false)

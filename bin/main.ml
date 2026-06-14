@@ -14,9 +14,16 @@ let print_error_or_result = function
   | Second msg -> print_message msg
   | First objects ->
       let open Postgres.Module in
+      Util.Show.show_line
+        (fun x -> x)
+        (String.concat ~sep:"." objects.module_name);
+      print_endline "\n";
       List.iter
-        ~f:(Util.Show.show_line Postgres.Statement.show_statement)
-        objects.statements
+        ~f:(fun s ->
+          Util.Show.show_line Postgres.Statement.show_statement s;
+          print_endline "")
+        objects.statements;
+      print_endline "\n"
 
 let command =
   Command.basic ~summary:"Generate code for interacting with postgres objects"

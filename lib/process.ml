@@ -39,10 +39,9 @@ end = struct
                 Second [%string "ERROR: %{Fpath.to_string file_path}: %{msg}"]))
 
   let postgres_modules_of_folder ~base_path =
-    let sql_files =
-      Util.File.get_files_in_directory_with_extension ~recurse:true
-        ~extension:".sql" base_path
-    in
-    List.map sql_files ~f:(fun file_path ->
-        postgres_module_of_file ~base_path ~file_path)
+    Util.File.get_files_in_directory_with_extension ~recurse:true
+      ~extension:".sql" base_path
+    |> List.sort ~compare:Util.File.compare
+    |> List.map ~f:(fun file_path ->
+           postgres_module_of_file ~base_path ~file_path)
 end

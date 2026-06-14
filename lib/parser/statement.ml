@@ -42,14 +42,7 @@ let returns_keyword = keyword "RETURNS"
 let type_keyword = keyword "TYPE"
 let view_keyword = keyword "VIEW"
 let comment = string "--" *> take_till_char '\n' *> return ()
-
-let or_replace =
-  many (or_keyword *> replace_keyword *> return ())
-  >>= (fun rs ->
-        match List.length rs with
-        | 0 | 1 -> return ()
-        | _ -> fail "Too many OR REPLACE")
-  <?> "or_replace"
+let or_replace = or_keyword *> replace_keyword
 
 let variable_name =
   take_while1 (function
@@ -111,23 +104,21 @@ let function_statement =
    and+ function_language = language_name
    and+ _ = as_keyword
    and+ function_body = function_body in
-   Some
-     (Create
-        (Function
-           {
-             function_name;
-             function_parameters;
-             function_return;
-             function_language;
-             function_body;
-           })))
+   Object.Function
+     {
+       function_name;
+       function_parameters;
+       function_return;
+       function_language;
+       function_body;
+     })
   <?> "function_statement"
 
 let type_statement =
   let+ composite_name = variable_name
   and+ _ = as_keyword
   and+ composite_fields = bracketed_params in
-  Some (Create (Composite { composite_name; composite_fields }))
+  Object.Composite { composite_name; composite_fields }
 
 let domain_constraint =
   take_till_char ';' >>= function
@@ -146,7 +137,7 @@ let domain_statement =
   and+ _ = as_keyword
   and+ underlying_type = domain_type
   and+ domain_constraint = domain_constraint in
-  Some (Create (Domain { domain_name; underlying_type; domain_constraint }))
+  Object.Domain { domain_name; underlying_type; domain_constraint }
 
 let view_body = take_till_char ';'
 
@@ -154,7 +145,7 @@ let view_statement =
   let+ view_name = variable_name
   and+ _ = as_keyword
   and+ view_body = view_body in
-  Some (Create (View { view_name; view_body }))
+  Object.View { view_name; view_body }
 
 let object_type =
   peek_char_fail >>= function
@@ -165,25 +156,41 @@ let object_type =
   | _ -> fail "unsupported drop" <?> "drop"
 
 let create =
-  create_keyword *> or_replace *> object_type
-  >>= (function
-        | Object_type.Function -> function_statement
-        | Object_type.Composite -> type_statement
-        | Object_type.Domain -> domain_statement
-        | Object_type.View -> view_statement)
+  (let+ _ = create_keyword
+   and+ or_replace_i, _ = at_most_one or_replace
+   and+ object_data =
+     object_type >>= fun a ->
+     match a with
+     | Object_type.Function -> function_statement
+     | Object_type.Composite -> type_statement
+     | Object_type.Domain -> domain_statement
+     | Object_type.View -> view_statement
+   in
+   Create { object_data; or_replace = Int.equal or_replace_i 1 })
   <?> "create"
 
-let if_exists = at_most_one (if_keyword *> exists_keyword *> return ())
+let if_exists = if_keyword *> exists_keyword
 
 let drop =
-  drop_keyword *> object_type >>= fun object_type ->
-  (if_exists *> variable_name) ^^ at_most_one cascade_keyword
-  >>= fun (object_name, (i, _)) ->
-  return (Some (Drop { object_type; object_name; cascade = i == 1 }))
+  let+ _ = drop_keyword
+  and+ object_type = object_type
+  and+ if_exists_i, _ = at_most_one if_exists
+  and+ object_name = variable_name
+  and+ cascade_i, _ = at_most_one cascade_keyword in
+  Drop
+    {
+      object_type;
+      object_name;
+      if_exists = Int.equal if_exists_i 1;
+      cascade = Int.equal cascade_i 1;
+    }
 
 let statement =
-  ws_or_comment *> peek_char_fail
-  >>= (function 'C' -> create | 'D' -> drop | _ -> return None)
+  ws_or_comment *> peek_char
+  >>= (function
+        | Some 'C' -> create >>= fun s -> return (Some s)
+        | Some 'D' -> drop >>= fun s -> return (Some s)
+        | _ -> return None)
   <* sc
   <?> "statement"
 

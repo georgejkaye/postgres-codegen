@@ -40,3 +40,5 @@ let get_files_in_directory_with_extension ?(recurse = false) ~extension =
   get_files_in_directory
     ~filter:(fun full_path -> equal_string (Fpath.get_ext full_path) extension)
     ~recurse
+
+let compare a b = String.compare (Fpath.to_string a) (Fpath.to_string b)

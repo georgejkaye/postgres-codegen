@@ -2,12 +2,15 @@ open Core
 
 module Process (F : File.Wrapper_t.File_wrapper_t) : sig
   val postgres_module_of_file :
+    fs:F.state ->
     file_path:Fpath.t ->
     base_path:Fpath.t ->
     (Postgres.Module.postgres_module, string) Either.t
 
   val postgres_modules_of_folder :
-    base_path:Fpath.t -> (Postgres.Module.postgres_module, string) Either.t list
+    fs:F.state ->
+    base_path:Fpath.t ->
+    (Postgres.Module.postgres_module, string) Either.t list
 end = struct
   let module_name_of_file_path ~file_path ~base_path =
     match Fpath.relativize ~root:base_path file_path with
@@ -26,11 +29,11 @@ end = struct
         in
         Some (Fpath.segs (Fpath.add_seg parent renamed_base))
 
-  let postgres_module_of_file ~file_path ~base_path =
+  let postgres_module_of_file ~fs ~file_path ~base_path =
     match module_name_of_file_path ~file_path ~base_path with
     | None -> Second "Could not get module name"
     | Some module_name -> (
-        let read_result = F.read_file file_path in
+        let read_result = F.read_file fs file_path in
         match read_result with
         | Second error ->
             Second [%string "ERROR: %{Fpath.to_string file_path}: %{error}"]
@@ -43,10 +46,10 @@ end = struct
             | Error msg ->
                 Second [%string "ERROR: %{Fpath.to_string file_path}: %{msg}"]))
 
-  let postgres_modules_of_folder ~base_path =
+  let postgres_modules_of_folder ~fs ~base_path =
     Util.File.get_files_in_directory_with_extension ~recurse:true
       ~extension:".sql" base_path
     |> List.sort ~compare:Util.File.compare
     |> List.map ~f:(fun file_path ->
-           postgres_module_of_file ~base_path ~file_path)
+           postgres_module_of_file ~fs ~base_path ~file_path)
 end

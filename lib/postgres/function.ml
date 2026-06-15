@@ -1,3 +1,5 @@
+open Core
+
 type postgres_function = {
   function_name : string;
   function_return : Types.postgres_type;
@@ -5,4 +7,4 @@ type postgres_function = {
   function_language : Language.language;
   function_body : string;
 }
-[@@deriving show]
+[@@deriving show, compare]

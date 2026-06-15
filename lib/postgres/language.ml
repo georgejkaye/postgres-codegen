@@ -1,6 +1,6 @@
 open Core
 
-type language = Sql | C | Internal | Plpgsql [@@deriving show]
+type language = Sql | C | Internal | Plpgsql [@@deriving show, compare]
 
 let of_string s =
   match String.lowercase s with

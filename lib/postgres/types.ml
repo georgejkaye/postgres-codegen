@@ -1,3 +1,4 @@
+open Core
 open Util
 
 type postgres_primitive =
@@ -12,7 +13,7 @@ type postgres_primitive =
   | TimestampWithoutTimeZone
   | Interval
   | Daterange
-[@@deriving show]
+[@@deriving show, compare]
 
 type postgres_type =
   | Primitive of postgres_primitive
@@ -20,7 +21,7 @@ type postgres_type =
   | Array of postgres_type
   | Notnull of postgres_type
   | Setof of postgres_type
-[@@deriving show]
+[@@deriving show, compare]
 
 let rec postgres_type_of_string s =
   let upper_s = String.uppercase s in

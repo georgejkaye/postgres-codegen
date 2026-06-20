@@ -1,12 +1,12 @@
-open Postgres_codegen
+open Lib
 open Core
 
 let params =
   let open Command.Param in
   anon ("base" %: string)
 
-module File_wrapper = File.Wrapper.System_file_wrapper
-module Parser = Process.Process (File.Wrapper.System_file_wrapper)
+module File_wrapper = Wrapper.File.Wrapper.System_file_wrapper
+module Parser = Process.Process (File_wrapper)
 
 let get_postgres_objects = Parser.postgres_modules_of_folder
 let print_message = Util.Show.show_line (fun x -> x)
@@ -31,11 +31,12 @@ let command =
     ~readme:(fun () -> "Todo")
     (Command.Param.map params ~f:(fun base_path () ->
          let fs = File_wrapper.init_state in
-         let base_path = Util.File.of_string base_path in
+         let base_path = Util.Path.of_string base_path in
          match base_path with
-         | First base_path ->
-             get_postgres_objects ~fs ~base_path
-             |> List.iter ~f:print_error_or_result
+         | First base_path -> (
+             get_postgres_objects ~fs ~base_path |> function
+             | First result -> List.iter ~f:print_error_or_result result
+             | Second msg -> failwith msg)
          | Second _ -> failwith "Could not parse base path"))
 
 let () = Command_unix.run ~version:"1.0" ~build_info:"RWO" command

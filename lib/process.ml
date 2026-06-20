@@ -1,6 +1,6 @@
 open Core
 
-module Process (F : File.Wrapper_t.File_wrapper_t) : sig
+module Process (F : Wrapper.File.Wrapper_t.File_wrapper_t) : sig
   val postgres_module_of_file :
     fs:F.state ->
     file_path:Fpath.t ->
@@ -10,8 +10,10 @@ module Process (F : File.Wrapper_t.File_wrapper_t) : sig
   val postgres_modules_of_folder :
     fs:F.state ->
     base_path:Fpath.t ->
-    (Postgres.Module.postgres_module, string) Either.t list
+    ((Postgres.Module.postgres_module, string) Either.t list, string) Either.t
 end = struct
+  module FExt = Wrapper.File.Extensions.Make (F)
+
   let module_name_of_file_path ~file_path ~base_path =
     match Fpath.relativize ~root:base_path file_path with
     | None -> None
@@ -47,9 +49,13 @@ end = struct
                 Second [%string "ERROR: %{Fpath.to_string file_path}: %{msg}"]))
 
   let postgres_modules_of_folder ~fs ~base_path =
-    Util.File.get_files_in_directory_with_extension ~recurse:true
-      ~extension:".sql" base_path
-    |> List.sort ~compare:Util.File.compare
-    |> List.map ~f:(fun file_path ->
-           postgres_module_of_file ~fs ~base_path ~file_path)
+    FExt.files_of_directory_with_extension ~fs ~recurse:true ~extension:".sql"
+      base_path
+    |> function
+    | Second msg -> Second msg
+    | First files ->
+        List.sort ~compare:Fpath.compare files
+        |> List.map ~f:(fun file_path ->
+               postgres_module_of_file ~fs ~base_path ~file_path)
+        |> fun x -> First x
 end

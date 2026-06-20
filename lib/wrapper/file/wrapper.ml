@@ -33,21 +33,25 @@ module System_file_wrapper : Wrapper_t.File_wrapper_t = struct
       dir_path =
     let files = Sys_unix.ls_dir (Fpath.to_string dir_path) in
     let full_files =
-      List.fold
-        ~f:(fun acc file_name ->
-          let open Fpath in
-          let full_path = dir_path / file_name in
-          let acc = if filter full_path then full_path :: acc else acc in
-          if not recurse then acc
-          else
-            match is_dir () full_path with
-            | `Yes ->
-                let subdir_files =
-                  files_of_directory () full_path ~recurse:true ~filter
-                in
-                subdir_files @ acc
-            | _ -> acc)
-        ~init:[] files
+      List.fold files ~init:(First []) ~f:(fun acc file_name ->
+          match acc with
+          | Second msg -> Second msg
+          | First acc -> (
+              let open Fpath in
+              let full_path = dir_path / file_name in
+              let acc = if filter full_path then full_path :: acc else acc in
+              if not recurse then First acc
+              else
+                match is_dir () full_path with
+                | `Yes -> (
+                    match
+                      files_of_directory () full_path ~recurse:true ~filter
+                    with
+                    | Second msg -> Second msg
+                    | First subdir_files -> First (subdir_files @ acc))
+                | _ -> First acc))
     in
-    List.rev full_files
+    match full_files with
+    | Second msg -> Second msg
+    | First files -> First (List.rev files)
 end

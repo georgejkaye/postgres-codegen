@@ -16,5 +16,5 @@ module type File_wrapper_t = sig
     ?filter:(Fpath.t -> bool) ->
     ?recurse:bool ->
     Fpath.t ->
-    Fpath.t list
+    (Fpath.t list, string) Either.t
 end

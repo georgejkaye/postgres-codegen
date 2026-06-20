@@ -1,30 +1,28 @@
 open Alcotest
 module Parser = Lib.Parser.Process
+module Postgres = Lib.Postgres
 
-let pp_result pp_ok pp_error = function
-  | Ok v -> pp_ok v
-  | Error e -> pp_error e
-
-let test_parse_composite () =
-  let test_composite =
+let multiple_fields () =
+  let input =
     {|
       CREATE TYPE test_composite AS (
           field_one TEXT,
-          field_two NUMBER,
+          field_two INTEGER,
           field_three TIMESTAMP WITH TIME ZONE
       );
   |}
   in
+  Process.test_parser ~input
+    ~expected:
+      (Postgres.Statement.make_create_composite ~or_replace:false
+         "test_composite"
+         [
+           Postgres.Parameter.make_parameter "field_one"
+             (Postgres.Types.Primitive Postgres.Types.Text);
+           Postgres.Parameter.make_parameter "field_two"
+             (Postgres.Types.Primitive Postgres.Types.Integer);
+           Postgres.Parameter.make_parameter "field_three"
+             (Postgres.Types.Primitive Postgres.Types.TimestampWithTimeZone);
+         ])
 
-  let result = Parser.parse_statements test_composite in
-  match result with
-  | Error _ -> failwith "No result"
-  | Ok statements -> (
-      let _ = (check int) "number of results" (List.length statements) 1 in
-      let result_object = List.hd statements in
-      match result_object with
-      | None -> failwith "No result"
-      | Some s ->
-          check Test_postgres.Statement.testable_postgres_statement
-            "test_parse_composite" s Lib.Postgres.Statement.Create
-            { object_data })
+let tests = ("Composites", [ test_case "composite" `Quick multiple_fields ])

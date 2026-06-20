@@ -3,7 +3,7 @@ type postgres_object =
   | Domain of Domain.postgres_domain
   | Function of Function.postgres_function
   | View of View.postgres_view
-[@@deriving show, compare]
+[@@deriving show, compare, variants]
 
 let get_name = function
   | Composite c -> c.composite_name

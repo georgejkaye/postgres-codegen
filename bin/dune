@@ -3,4 +3,4 @@
  (name main)
  (preprocess
   (pps ppx_string))
- (libraries core core_unix.command_unix postgres_codegen))
+ (libraries core core_unix.command_unix lib))

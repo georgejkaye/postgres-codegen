@@ -1,5 +1,7 @@
 (test
  (name test)
+ (preprocess
+  (pps ppx_string))
  (libraries lib core alcotest fmt))
 
 (include_subdirs qualified)

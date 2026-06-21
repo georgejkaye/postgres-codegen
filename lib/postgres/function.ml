@@ -7,4 +7,4 @@ type postgres_function = {
   function_language : Language.language;
   function_body : string;
 }
-[@@deriving show, compare]
+[@@deriving show, compare, make]

@@ -5,20 +5,21 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github georgejkaye/postgres-codegen))
 
-(authors "Author Name")
+(authors "George Kaye")
 
-(maintainers "Maintainer Name")
+(maintainers "George Kaye")
 
-(license LICENSE)
+(license GPL-v3.0-or-later)
 
-(documentation https://url/to/documentation)
+(documentation https://github.com/georgejkaye/postgres-codegen)
 
 (package
  (name postgres_codegen)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (synopsis "Tool for managing and interacting with postgres sql files")
+ (description
+  "Tool to manage postgres sql files, running them into the db when updated and generating data access code for interacting with them in other languages")
  (depends
   ocaml
   dune
@@ -35,6 +36,4 @@
   ppx_compare
   ppx_variants_cov)
  (tags
-  (topics "to describe" your project)))
-
-; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
+  (postgres codegen python sql)))

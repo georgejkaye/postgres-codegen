@@ -49,7 +49,7 @@ let variable_name =
     | ' ' | ',' | '(' | ')' | ';' | '\n' | '\r' -> false
     | _ -> true)
   <* ws_or_comment
-  <?> "variable_name"
+  >>= fun s -> return (String.uppercase s) <?> "variable_name"
 
 let parameter_type =
   take_while1 (function ')' | ',' -> false | _ -> true) >>= fun t ->
@@ -148,11 +148,11 @@ let view_statement =
   Object.View { view_name; view_body }
 
 let object_type =
-  peek_char_fail >>= function
-  | 'F' -> function_keyword *> return Object_type.Function
-  | 'T' -> type_keyword *> return Object_type.Composite
-  | 'D' -> domain_keyword *> return Object_type.Domain
-  | 'V' -> view_keyword *> return Object_type.View
+  peek_char >>= function
+  | Some 'F' | Some 'c' -> function_keyword *> return Object_type.Function
+  | Some 'T' | Some 't' -> type_keyword *> return Object_type.Composite
+  | Some 'D' | Some 'd' -> domain_keyword *> return Object_type.Domain
+  | Some 'V' | Some 'v' -> view_keyword *> return Object_type.View
   | _ -> fail "unsupported drop" <?> "drop"
 
 let create =
@@ -180,7 +180,7 @@ let drop =
   Drop
     {
       object_type;
-      object_name;
+      object_name = String.uppercase object_name;
       if_exists = Int.equal if_exists_i 1;
       cascade = Int.equal cascade_i 1;
     }
@@ -188,8 +188,8 @@ let drop =
 let statement =
   ws_or_comment *> peek_char
   >>= (function
-        | Some 'C' -> create >>= fun s -> return (Some s)
-        | Some 'D' -> drop >>= fun s -> return (Some s)
+        | Some 'C' | Some 'c' -> create >>= fun s -> return (Some s)
+        | Some 'D' | Some 'd' -> drop >>= fun s -> return (Some s)
         | _ -> return None)
   <* sc
   <?> "statement"

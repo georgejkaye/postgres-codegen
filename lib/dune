@@ -7,6 +7,8 @@
    ppx_deriving.make
    ppx_compare
    ppx_variants_conv))
- (libraries core core_unix.sys_unix re angstrom fpath fmt))
+ (libraries core core_unix.sys_unix re angstrom fpath fmt)
+ (instrumentation
+  (backend bisect_ppx)))
 
 (include_subdirs qualified)

@@ -12,6 +12,18 @@ bug-reports: "https://github.com/username/reponame/issues"
 depends: [
   "ocaml"
   "dune" {>= "3.15"}
+  "core"
+  "core_unix"
+  "re"
+  "angstrom"
+  "fpath"
+  "fmt"
+  "alcotest"
+  "bisect_ppx"
+  "ppx_string"
+  "ppx_deriving"
+  "ppx_compare"
+  "ppx_variants_cov"
   "odoc" {with-doc}
 ]
 build: [

@@ -19,7 +19,21 @@
  (name postgres_codegen)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune)
+ (depends
+  ocaml
+  dune
+  core
+  core_unix
+  re
+  angstrom
+  fpath
+  fmt
+  alcotest
+  bisect_ppx
+  ppx_string
+  ppx_deriving
+  ppx_compare
+  ppx_variants_cov)
  (tags
   (topics "to describe" your project)))
 

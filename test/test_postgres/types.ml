@@ -8,17 +8,14 @@ let testable_postgres_type =
 
 let test_postgres_type_of_string input expected =
   check testable_postgres_type
-    [%string "testable_postgres_type_of_string_%{input}"]
-    (Postgres.Types.postgres_type_of_string input)
-    expected;
+    [%string "testable_postgres_type_of_string_%{input}"] expected
+    (Postgres.Types.postgres_type_of_string input);
   check testable_postgres_type
-    [%string "testable_postgres_type_of_string_%{input}"]
-    (Postgres.Types.postgres_type_of_string (String.uppercase input))
-    expected;
+    [%string "testable_postgres_type_of_string_%{input}"] expected
+    (Postgres.Types.postgres_type_of_string (String.uppercase input));
   check testable_postgres_type
-    [%string "testable_postgres_type_of_string_%{input}"]
+    [%string "testable_postgres_type_of_string_%{input}"] expected
     (Postgres.Types.postgres_type_of_string (String.lowercase input))
-    expected
 
 let void () =
   test_postgres_type_of_string "void"

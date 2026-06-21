@@ -5,7 +5,7 @@ module Postgres = Lib.Postgres
 let test_parser ~input ~expected =
   let result = Parser.parse_statements input in
   match result with
-  | Error _ -> failwith "No result"
+  | Error msg -> failwith [%string "No result: %{msg}"]
   | Ok statements -> (
       let _ = (check int) "number of results" (List.length statements) 1 in
       let result_object = List.hd statements in
@@ -13,4 +13,4 @@ let test_parser ~input ~expected =
       | None -> failwith "No result"
       | Some s ->
           check Test_postgres.Statement.testable_postgres_statement
-            "test_parse_composite" s expected)
+            "test_parser" expected s)

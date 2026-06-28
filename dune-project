@@ -11,7 +11,7 @@
 
 (maintainers "George Kaye")
 
-(license GPL-v3.0-or-later)
+(license GPL-3.0-or-later)
 
 (documentation https://github.com/georgejkaye/postgres-codegen)
 
@@ -34,6 +34,6 @@
   ppx_string
   ppx_deriving
   ppx_compare
-  ppx_variants_cov)
+  ppx_variants_conv)
  (tags
   (postgres codegen python sql)))

@@ -5,7 +5,7 @@ description:
   "Tool to manage postgres sql files, running them into the db when updated and generating data access code for interacting with them in other languages"
 maintainer: ["George Kaye"]
 authors: ["George Kaye"]
-license: "GPL-v3.0-or-later"
+license: "GPL-3.0-or-later"
 tags: ["postgres" "codegen" "python" "sql"]
 homepage: "https://github.com/georgejkaye/postgres-codegen"
 doc: "https://github.com/georgejkaye/postgres-codegen"
@@ -24,7 +24,7 @@ depends: [
   "ppx_string"
   "ppx_deriving"
   "ppx_compare"
-  "ppx_variants_cov"
+  "ppx_variants_conv"
   "odoc" {with-doc}
 ]
 build: [

@@ -1,0 +1,24 @@
+name: Build project and run tests
+on:
+  push:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v6
+
+    - name: Set up OCaml
+      uses: ocaml/setup-ocaml@v3
+      with:
+        ocaml-compiler: "5.1.1"
+        opam-disable-sandboxing: true
+
+    - name: Install dependencies
+      run: opam install . --deps-only --with-test
+
+    - name: Build project
+      run: opam exec -- dune build
+
+    - name: Test project
+      run: opam exec -- dune runtest

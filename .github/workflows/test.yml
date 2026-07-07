@@ -21,4 +21,10 @@ jobs:
       run: opam exec -- dune build
 
     - name: Test project
-      run: opam exec -- dune runtest
+      uses: georgejkaye/alcotest-github-action@v0.1.10
+
+    - name: Upload test results artifact
+      uses: actions/upload-artifact@v7
+      with:
+          name: Alcotest results
+          path: alcotest.json

@@ -23,7 +23,7 @@ jobs:
     - name: Run tests
       id: test
       run: |
-        ALCOTEST_COLOR=never dune runtest 2> test_output.txt
+        ALCOTEST_COLOR=never opam exec -- dune runtest 2> test_output.txt
 
     - name: Process test output
       uses: georgejkaye/alcotest-github-action@v0.2.0

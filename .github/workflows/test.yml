@@ -20,8 +20,16 @@ jobs:
     - name: Build project
       run: opam exec -- dune build
 
-    - name: Test project
-      uses: georgejkaye/alcotest-github-action@v0.1.10
+    - name: Run tests
+      id: test
+      run: |
+        ALCOTEST_COLOR=never dune runtest 2> test_output.txt
+
+    - name: Process test output
+      uses: georgejkaye/alcotest-github-action@v0.2.0
+      with:
+        test-output: test_output.txt
+        output-file: alcotest.json
 
     - name: Upload test results artifact
       uses: actions/upload-artifact@v7

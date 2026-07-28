@@ -28,8 +28,8 @@ jobs:
     - name: Process test output
       uses: georgejkaye/alcotest-github-action@v0.2.0
       with:
-        test-output: test_output.txt
-        output-file: alcotest.json
+        dune-runtest-input-path: test_output.txt
+        test-summary-output-path: alcotest.json
 
     - name: Upload test results artifact
       uses: actions/upload-artifact@v7

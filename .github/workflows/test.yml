@@ -26,7 +26,7 @@ jobs:
         ALCOTEST_COLOR=never opam exec -- dune runtest 2> test_output.txt
 
     - name: Process test output
-      uses: georgejkaye/alcotest-github-action@v0.2.2
+      uses: georgejkaye/alcotest-github-action@v0.3.1
       with:
         dune-runtest-input-path: test_output.txt
         test-summary-output-path: alcotest.json

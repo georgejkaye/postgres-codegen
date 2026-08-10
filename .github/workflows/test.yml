@@ -28,7 +28,7 @@ jobs:
     - name: Upload runtest output artifact
       uses: actions/upload-artifact@v7
       with:
-          name: Alcotest results
+          name: Raw Alcotest output
           path: test_results.txt
 
     - name: Process test output

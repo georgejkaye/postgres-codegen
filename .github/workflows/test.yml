@@ -28,7 +28,7 @@ jobs:
     - name: Upload runtest output artifact
       uses: actions/upload-artifact@v7
       with:
-          name: Raw Alcotest output
+          name: alcotest-raw
           path: test_results.txt
 
     - name: Process test output
@@ -40,5 +40,13 @@ jobs:
     - name: Upload test results artifact
       uses: actions/upload-artifact@v7
       with:
-          name: Alcotest results
+          name: alcotest-json
           path: alcotest.json
+
+    - name: Create test report
+      uses: georgejkaye/test-reporter@v1.0.0
+      with:
+        artifact: alcotest-json
+        name: Alcotest results
+        path: alcotest.json
+        reporter: alcotest-json

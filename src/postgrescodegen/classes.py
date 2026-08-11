@@ -1,0 +1,134 @@
+from abc import abstractmethod
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+
+from postgrescodegen.pynames import (
+    get_python_name_for_postgres_function_name,
+    get_python_name_for_postgres_type_name,
+)
+
+
+@dataclass
+class DbCredentials:
+    host: str
+    port: int
+    name: str
+    user: str
+    password: str
+
+
+@dataclass
+class InputArgs:
+    user_scripts_path: Path
+    python_source_root: Path
+    output_code_module: str
+    resources_path: Path
+    watch_files: bool
+    roll_scripts: bool
+    db_credentials: Optional[DbCredentials]
+
+
+class PostgresObject:
+    @abstractmethod
+    def get_name(self) -> str:
+        pass
+
+
+class PythonableObject:
+    @abstractmethod
+    def get_python_name(self) -> str:
+        pass
+
+
+class PythonablePostgresObject(PostgresObject, PythonableObject):
+    pass
+
+
+@dataclass
+class PostgresTypeField:
+    field_name: str
+    field_type: str
+
+
+@dataclass
+class PostgresType(PythonablePostgresObject):
+    type_name: str
+    type_fields: list[PostgresTypeField]
+
+    def get_name(self) -> str:
+        return self.type_name
+
+    def get_python_name(self) -> str:
+        return get_python_name_for_postgres_type_name(self.type_name)
+
+
+@dataclass
+class PostgresDomain(PythonablePostgresObject):
+    domain_name: str
+    underlying_type: str
+
+    def get_name(self) -> str:
+        return self.domain_name
+
+    def get_python_name(self) -> str:
+        return get_python_name_for_postgres_type_name(self.underlying_type)
+
+
+@dataclass
+class PythonPostgresModule[T: PostgresObject]:
+    module_name: str
+    module_objects: list[T]
+    python_code: str
+
+
+@dataclass
+class PostgresFunctionArgument:
+    argument_name: str
+    argument_type: str
+
+
+@dataclass
+class PostgresFunction(PythonablePostgresObject):
+    function_name: str
+    function_return: str
+    function_args: list[PostgresFunctionArgument]
+
+    def get_name(self) -> str:
+        return self.function_name
+
+    def get_python_name(self) -> str:
+        return get_python_name_for_postgres_function_name(self.function_name)
+
+
+@dataclass
+class PostgresFileResult:
+    type_files: list[Path]
+    view_files: list[Path]
+    function_files: list[Path]
+
+
+type PythonPostgresModuleLookup = dict[str, str]
+
+type PythonImportDict = dict[str, set[str]]
+
+
+@dataclass
+class PythonImport:
+    module: str
+    token: str
+
+
+@dataclass
+class PsycopgLoader(PythonableObject):
+    loader_name: str
+    loader_module: str
+
+    def get_python_name(self) -> str:
+        return self.loader_name
+
+
+@dataclass
+class PsycopgDomainDetails:
+    domain_name: str
+    loader: Optional[PsycopgLoader]

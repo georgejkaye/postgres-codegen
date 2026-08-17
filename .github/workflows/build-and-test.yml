@@ -32,7 +32,7 @@ jobs:
           path: test_results.txt
 
     - name: Process test output
-      uses: georgejkaye/alcotest-github-action@v0.3.1
+      uses: georgejkaye/alcotest-github-action@v1.1.0
       with:
         dune-runtest-input-path: test_results.txt
         test-summary-output-path: alcotest.json
@@ -43,10 +43,12 @@ jobs:
           name: alcotest-json
           path: alcotest.json
 
-    - name: Create test report
-      uses: georgejkaye/test-reporter@v1.0.0
+    - name: Public test report
+      uses: ctrf-io/github-test-reporter@v1
       with:
-        artifact: alcotest-json
-        name: Alcotest results
-        path: alcotest.json
-        reporter: alcotest-json
+        report-path: alcotest-json
+        github-report: true
+        upload-artifact: true
+        fetch-previous-results: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

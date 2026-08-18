@@ -17,13 +17,26 @@ jobs:
     - name: Install dependencies
       run: opam install . --deps-only --with-test
 
+    - name: Get Alcotest version
+      id: alcotest-version
+      run: |
+        echo version=$(opam info alcotest | sed -n 's/.*\(version\)[[:space:]]*\([0-9]\+\(\.[0-9]\+\)*\).*/\2/p') >> "$GITHUB_OUTPUT"
+
     - name: Build project
       run: opam exec -- dune build
+
+    - name: Get testing start timestamp
+      id: test-start-timestamp
+      run: echo timestamp=$(date '+%Y-%m-%dT%H:%M:%S') >> "$GITHUB_OUTPUT"
 
     - name: Run tests
       id: test
       run: |
         ALCOTEST_COLOR=never opam exec -- dune runtest 2> >(tee test_results.txt)
+
+    - name: Get testing end timestamp
+      id: test-end-timestamp
+      run: echo timestamp=$(date '+%Y-%m-%dT%H:%M:%S') >> "$GITHUB_OUTPUT"
 
     - name: Upload runtest output artifact
       uses: actions/upload-artifact@v7
@@ -35,8 +48,11 @@ jobs:
     - name: Process test output
       uses: georgejkaye/alcotest-github-action@v2.0.0
       with:
-        dune-runtest-input-path: test_results.txt
-        test-summary-output-path: alcotest-ctrf.json
+        alcotest-input-path: test_results.txt
+        ctrf-output-path: alcotest-ctrf.json
+        start-timestamp: ${{ steps.test-start-timestamp.timestamp }}
+        end-timestamp: ${{ steps.test-end-timestamp.timestamp }}
+        alcotest-version: ${{ steps.alcotest-version.version }}
       if: always()
 
     - name: Upload test results artifact

@@ -33,7 +33,7 @@ jobs:
       if: always()
 
     - name: Process test output
-      uses: georgejkaye/alcotest-github-action@v1.1.0
+      uses: georgejkaye/alcotest-github-action@v2.0.0
       with:
         dune-runtest-input-path: test_results.txt
         test-summary-output-path: alcotest-ctrf.json

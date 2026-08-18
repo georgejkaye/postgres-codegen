@@ -23,7 +23,7 @@ jobs:
     - name: Run tests
       id: test
       run: |
-        ALCOTEST_COLOR=never opam exec -- dune runtest 2> test_results.txt; return 0
+        ALCOTEST_COLOR=never opam exec -- dune runtest 2> >(tee test_results.txt)
 
     - name: Upload runtest output artifact
       uses: actions/upload-artifact@v7

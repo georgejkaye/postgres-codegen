@@ -36,20 +36,20 @@ jobs:
       uses: georgejkaye/alcotest-github-action@v1.1.0
       with:
         dune-runtest-input-path: test_results.txt
-        test-summary-output-path: alcotest.json
+        test-summary-output-path: alcotest-ctrf.json
       if: always()
 
     - name: Upload test results artifact
       uses: actions/upload-artifact@v7
       with:
-          name: alcotest-json
-          path: alcotest.json
+          name: alcotest-ctrf
+          path: alcotest-ctrf.json
       if: always()
 
     - name: Publish test report
       uses: ctrf-io/github-test-reporter@v1
       with:
-        report-path: alcotest-json
+        report-path: alcotest-ctrf.json
         github-report: true
         upload-artifact: true
         fetch-previous-results: true

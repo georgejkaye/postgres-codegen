@@ -50,9 +50,9 @@ jobs:
       with:
         alcotest-input-path: test_results.txt
         ctrf-output-path: alcotest-ctrf.json
-        start-timestamp: ${{ steps.test-start-timestamp.timestamp }}
-        end-timestamp: ${{ steps.test-end-timestamp.timestamp }}
-        alcotest-version: ${{ steps.alcotest-version.version }}
+        start-timestamp: "2026-08-19T21:23:37"
+        end-timestamp:  "2026-08-19T21:24:37"
+        alcotest-version: "1.7.1"
       if: always()
 
     - name: Upload test results artifact

@@ -69,6 +69,7 @@ jobs:
         github-report: true
         upload-artifact: true
         fetch-previous-results: true
+        suite-folded-report: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: always()

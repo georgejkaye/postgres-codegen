@@ -62,10 +62,14 @@ jobs:
           path: alcotest-ctrf.json
       if: always()
 
+    - name: Flatten suite arrays
+      run: |
+        jq '.results.tests[] |= (.suite = if (.suite | type) == "array" then (.suite | join(" > ")) else .suite end)' alcotest-ctrf.json > alctoest-ctrf-flat.json
+
     - name: Publish test report
       uses: ctrf-io/github-test-reporter@v1
       with:
-        report-path: alcotest-ctrf.json
+        report-path: alcotest-ctrf-flat.json
         github-report: true
         upload-artifact: true
         fetch-previous-results: true

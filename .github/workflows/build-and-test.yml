@@ -67,6 +67,13 @@ jobs:
         jq '.results.tests[] |= (.suite = if (.suite | type) == "array" then (.suite | join(" > ")) else .suite end)' alcotest-ctrf.json > alcotest-ctrf-flat.json
       if: always()
 
+    - name: Upload flat test results artifact
+      uses: actions/upload-artifact@v7
+      with:
+          name: alcotest-ctrf-flat
+          path: alcotest-ctrf-flat.json
+      if: always()
+
     - name: Publish test report
       uses: ctrf-io/github-test-reporter@v1
       with:

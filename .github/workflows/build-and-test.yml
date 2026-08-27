@@ -46,7 +46,7 @@ jobs:
       if: always()
 
     - name: Process test output
-      uses: georgejkaye/alcotest-github-action@v2.2.0
+      uses: georgejkaye/alcotest-github-action@v2.3.0
       with:
         alcotest-input-path: test_results.txt
         ctrf-output-path: alcotest-ctrf.json

@@ -66,10 +66,11 @@ jobs:
       uses: ctrf-io/github-test-reporter@v1.3.0
       with:
         report-path: alcotest-ctrf.json
-        github-report: true
         upload-artifact: true
         fetch-previous-results: true
-        suite-list-report: true
+        github-report: true
+        failed-folded-report: true
+        suite-folded-report: true
         always-group-by: true
         group-by: suite
       env:

@@ -65,7 +65,7 @@ jobs:
     - name: Publish test report
       uses: ctrf-io/github-test-reporter@v1.3.0
       with:
-        report-path: alcotest-ctrf-flat.json
+        report-path: alcotest-ctrf.json
         github-report: true
         upload-artifact: true
         fetch-previous-results: true

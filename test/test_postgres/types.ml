@@ -97,7 +97,7 @@ let array_primitive () =
 
 let array_composite () =
   test_postgres_type_of_string "test_composite[]"
-    (Postgres.Types.Array (Postgres.Types.Composite "TEST_COMPOSITE"))
+    (Postgres.Types.Array (Postgres.Types.Composite "TEST_COMoPOSITE"))
 
 let array_notnull_primitive () =
   test_postgres_type_of_string "text_notnull[]"

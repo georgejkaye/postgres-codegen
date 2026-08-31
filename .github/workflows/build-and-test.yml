@@ -70,6 +70,8 @@ jobs:
         upload-artifact: true
         fetch-previous-results: true
         suite-list-report: true
+        always-group-by: true
+        group-by: suite
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: always()

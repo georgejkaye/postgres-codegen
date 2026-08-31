@@ -37,6 +37,7 @@ jobs:
     - name: Get testing end timestamp
       id: test-end-timestamp
       run: echo "timestamp=$(date '+%Y-%m-%dT%H:%M:%S')" >> "$GITHUB_OUTPUT"
+      if: always()
 
     - name: Upload runtest output artifact
       uses: actions/upload-artifact@v7

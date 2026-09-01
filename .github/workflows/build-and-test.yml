@@ -1,0 +1,82 @@
+name: Build project and run tests
+on:
+  push:
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v6
+
+    - name: Set up OCaml
+      uses: ocaml/setup-ocaml@v3
+      with:
+        ocaml-compiler: "5.1.1"
+        opam-disable-sandboxing: true
+
+    - name: Install dependencies
+      run: opam install . --deps-only --with-test
+
+    - name: Get Alcotest version
+      id: alcotest-version
+      run: |
+        echo "version=$(opam info alcotest --color=never | sed -n 's#.*\(version\)[[:space:]]*\([0-9]\+\(\.[0-9]\+\)*\).*#\2#p')" >> "$GITHUB_OUTPUT"
+
+    - name: Build project
+      run: opam exec -- dune build
+
+    - name: Get testing start timestamp
+      id: test-start-timestamp
+      run: echo "timestamp=$(date '+%Y-%m-%dT%H:%M:%S')" >> "$GITHUB_OUTPUT"
+
+    - name: Run tests
+      id: test
+      run: |
+        ALCOTEST_COLOR=never opam exec -- dune runtest 2> >(tee test_results.txt)
+
+    - name: Test
+      run: echo ${{ steps.alcotest-version }}
+
+    - name: Get testing end timestamp
+      id: test-end-timestamp
+      run: echo "timestamp=$(date '+%Y-%m-%dT%H:%M:%S')" >> "$GITHUB_OUTPUT"
+      if: always()
+
+    - name: Upload runtest output artifact
+      uses: actions/upload-artifact@v7
+      with:
+          name: alcotest-raw
+          path: test_results.txt
+      if: always()
+
+    - name: Process test output
+      uses: georgejkaye/alcotest-github-action@v2.8.0
+      with:
+        alcotest-input-path: test_results.txt
+        ctrf-output-path: alcotest-ctrf.json
+        start-timestamp: ${{ steps.test-start-timestamp.outputs.timestamp }}
+        end-timestamp:  ${{ steps.test-end-timestamp.outputs.timestamp }}
+        alcotest-version: ${{ steps.alcotest-version.outputs.version }}
+      if: always()
+
+    - name: Upload test results artifact
+      uses: actions/upload-artifact@v7
+      with:
+          name: alcotest-ctrf
+          path: alcotest-ctrf.json
+      if: always()
+
+    - name: Publish test report
+      uses: ctrf-io/github-test-reporter@v1.3.0
+      with:
+        report-path: alcotest-ctrf.json
+        upload-artifact: true
+        fetch-previous-results: true
+        github-report: true
+        failed-folded-report: true
+        suite-folded-report: true
+        always-group-by: true
+        group-by: suite
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: always()

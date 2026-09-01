@@ -1,0 +1,6 @@
+(executable
+ (public_name postgres_codegen)
+ (name main)
+ (preprocess
+  (pps ppx_string))
+ (libraries core core_unix.command_unix lib))

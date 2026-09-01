@@ -34,6 +34,9 @@ jobs:
       run: |
         ALCOTEST_COLOR=never opam exec -- dune runtest 2> >(tee test_results.txt)
 
+    - name: Test
+      run: echo ${{ steps.alcotest-version }}
+
     - name: Get testing end timestamp
       id: test-end-timestamp
       run: echo "timestamp=$(date '+%Y-%m-%dT%H:%M:%S')" >> "$GITHUB_OUTPUT"
